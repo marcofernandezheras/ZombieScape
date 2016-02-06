@@ -5,6 +5,9 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import mapgenerator.DungeonBuilder;
+import mapgenerator.MapStage;
+import mapgenerator.StageBuilderConfig;
 
 public class ZombieScape extends ApplicationAdapter {
 	SpriteBatch batch;
@@ -14,6 +17,11 @@ public class ZombieScape extends ApplicationAdapter {
 	public void create () {
 		batch = new SpriteBatch();
 		img = new Texture("badlogic.jpg");
+
+		DungeonBuilder dungeonBuilder = new DungeonBuilder(new StageBuilderConfig());
+		MapStage stage = new MapStage(41, 31);
+		dungeonBuilder.generate(stage);
+		stage.print();
 	}
 
 	@Override
