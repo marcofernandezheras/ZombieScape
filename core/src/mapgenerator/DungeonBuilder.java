@@ -41,24 +41,15 @@ public class DungeonBuilder extends StageBuilder {
             y = 0;
             x+=2;
         }
-
-        System.out.println("Map Stage: Inflated");
-        for (int i = 0; i < inflated[0].length; i++) {
-            for (int j = 0; j < inflated.length; j++) {
-                System.out.print(inflated[j][i]);
-            }
-            System.out.println();
-        }
-        System.out.println();
         return inflated;
     }
 
     private StageBuilderConfig config;
+    private List<Rectangle> rooms = new ArrayList<>();
 
     public DungeonBuilder(StageBuilderConfig config) {
         this.config = config;
     }
-
 
 
     /// For each open position in the dungeon, the index of the connected region
@@ -86,6 +77,7 @@ public class DungeonBuilder extends StageBuilder {
 
         _addRooms();
 
+        stage.print();
         // Fill in all of the empty space with mazes.
         for (int y = 1; y < stage.height(); y += 2) {
             for (int x = 1; x < stage.width(); x += 2) {
@@ -98,7 +90,6 @@ public class DungeonBuilder extends StageBuilder {
         _removeDeadEnds();
 
         stage.setTiles(inflate(stage.getTiles()));
-        stage.getRooms().forEach(r -> inflate(r));
     }
 
     private void _addRooms() {
@@ -109,14 +100,15 @@ public class DungeonBuilder extends StageBuilder {
             Rectangle aux = inflateRoom(room);
 
             boolean overlaps = false;
-            for (Rectangle rect : stage.getRooms()) {
+            for (Rectangle rect : rooms) {
                 if(rect.overlaps(aux)){
                     overlaps = true;
                     break;
                 }
             }
             if (overlaps) continue;
-            stage.addRoom(room);
+            rooms.add(new Rectangle(room));
+            stage.addRoom((int)room.x, (int)room.y, (int)room.width, (int)room.height);
             carveRoom(room);
         }
     }
@@ -136,10 +128,6 @@ public class DungeonBuilder extends StageBuilder {
         int x = random.nextInt(0,(stage.width() - width) / 2) * 2 + 1;
         int y = random.nextInt(0,(stage.height() - height) / 2) * 2 + 1;
         return _room.set(x,y,width,height);
-    }
-
-    private void inflate(Rectangle room){
-        room.set(room.x-1, room.y-1, room.width+2, room.height+2);
     }
 
     private Rectangle inflateRoom(Rectangle room){

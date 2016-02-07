@@ -64,6 +64,9 @@ public class MapTextureFactory {
         Texture wall_3_tex = new Texture("wall_3.png");
         Texture wall_5_tex = new Texture("wall_5.png");
         Texture wall_7_tex = new Texture("wall_7.png");
+
+        Texture point_tex = new Texture("point.png");
+
         wall_8_tex = new Texture("wall_8.png");
 
 
@@ -94,14 +97,17 @@ public class MapTextureFactory {
                     int wallsAround = getWallsAround(tiles, j, i);
                     switch (wallsAround){
                         case 3:
-                            paintWall3(tiles, j, i, wall_3, batch);
+                            if(paintWall3(tiles, j, i, wall_3, batch))
+                                stage.addWall(j,i);
                             break;
                         case 5:
                         case 6:
-                            paintWall5_6(tiles, j, i, wall_5, batch);
+                            if(paintWall5_6(tiles, j, i, wall_5, batch))
+                                stage.addWall(j,i);
                             break;
                         case 7:
-                            paintWall7(tiles, j, i, wall_7, batch);
+                            if(paintWall7(tiles, j, i, wall_7, batch))
+                                stage.addWall(j,i);
                             break;
                         default:
                             batch.draw(wall_8_tex,TILE_SIZE * j, TILE_SIZE * i);
@@ -119,6 +125,7 @@ public class MapTextureFactory {
             }
         }
 
+
         batch.end();
         fbo.end();
 
@@ -127,24 +134,28 @@ public class MapTextureFactory {
         wall_3_tex.dispose();
         wall_5_tex.dispose();
         wall_7_tex.dispose();
+
+        point_tex.dispose();
         wall_8_tex.dispose();
 
         return fbo.getColorBufferTexture();
     }
 
-    private static void paintWall7(Tile[][] tiles, int x, int y, Sprite sprite, SpriteBatch batch) {
+    private static boolean paintWall7(Tile[][] tiles, int x, int y, Sprite sprite, SpriteBatch batch) {
         try {
             boolean[] cardinal = getDiagonal(tiles, x, y);
 
             if(cardinal[0] ){
                 sprite.setPosition(TILE_SIZE * x, TILE_SIZE * y);
                 sprite.draw(batch);
+                return true;
             }
             else if(cardinal[1] ){
                 sprite.flip(true,false);
                 sprite.setPosition(TILE_SIZE * x, TILE_SIZE * y);
                 sprite.draw(batch);
                 sprite.flip(true,false);
+                return true;
 
             }
             else if(cardinal[2] ){
@@ -152,21 +163,24 @@ public class MapTextureFactory {
                 sprite.setPosition(TILE_SIZE * x, TILE_SIZE * y);
                 sprite.draw(batch);
                 sprite.flip(true,true);
+                return true;
             }
             else if(cardinal[3]){
                 sprite.flip(false,true);
                 sprite.setPosition(TILE_SIZE * x, TILE_SIZE * y);
                 sprite.draw(batch);
                 sprite.flip(false,true);
+                return true;
             }
         }
         catch (Exception e){
             //wtf!?
             batch.draw(wall_8_tex, TILE_SIZE * x, TILE_SIZE * y);
         }
+        return false;
     }
 
-    private static void paintWall3(Tile[][] tiles, int x, int y, Sprite sprite, SpriteBatch batch) {
+    private static boolean paintWall3(Tile[][] tiles, int x, int y, Sprite sprite, SpriteBatch batch) {
         try {
             boolean[] cardinal = getCardinal(tiles, x, y);
 
@@ -175,31 +189,36 @@ public class MapTextureFactory {
                 sprite.setPosition(TILE_SIZE * x, TILE_SIZE * y);
                 sprite.draw(batch);
                 sprite.flip(false,true);
+                return true;
             }
             else if(cardinal[1] && cardinal[2]){
                 sprite.flip(true,true);
                 sprite.setPosition(TILE_SIZE * x, TILE_SIZE * y);
                 sprite.draw(batch);
                 sprite.flip(true,true);
+                return true;
             }
             else if(cardinal[2] && cardinal[3]){
                 sprite.flip(true,false);
                 sprite.setPosition(TILE_SIZE * x, TILE_SIZE * y);
                 sprite.draw(batch);
                 sprite.flip(true,false);
+                return true;
             }
             else if(cardinal[0] && cardinal[3]){
                 sprite.setPosition(TILE_SIZE * x, TILE_SIZE * y);
                 sprite.draw(batch);
+                return true;
             }
         }
         catch (Exception e){
             //Corners of the map
             batch.draw(wall_8_tex, TILE_SIZE * x, TILE_SIZE * y);
         }
+        return false;
     }
 
-    private static void paintWall5_6(Tile[][] tiles, int x, int y, Sprite sprite, SpriteBatch batch) {
+    private static boolean paintWall5_6(Tile[][] tiles, int x, int y, Sprite sprite, SpriteBatch batch) {
 
         try {
             boolean[] cardinal = getCardinal(tiles, x, y);
@@ -209,28 +228,32 @@ public class MapTextureFactory {
                 sprite.setPosition(TILE_SIZE * x, TILE_SIZE * y);
                 sprite.draw(batch);
                 sprite.rotate(-270);
-
+                return true;
             }
             else if(cardinal[1]){
                 sprite.flip(false,true);
                 sprite.setPosition(TILE_SIZE * x, TILE_SIZE * y);
                 sprite.draw(batch);
                 sprite.flip(false,true);
+                return true;
             }
             else if(cardinal[2]){
                 sprite.rotate(90);
                 sprite.setPosition(TILE_SIZE * x, TILE_SIZE * y);
                 sprite.draw(batch);
                 sprite.rotate(-90);
+                return true;
             }
             else if(cardinal[3]){
                 sprite.setPosition(TILE_SIZE * x, TILE_SIZE * y);
                 sprite.draw(batch);
+                return true;
             }
         }
         catch (Exception e){
             //Border of the map
             batch.draw(wall_8_tex, TILE_SIZE * x, TILE_SIZE * y);
         }
+        return false;
     }
 }

@@ -1,20 +1,32 @@
 package mapgenerator;
 
-import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.math.Vector2;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
+
 /**
  * Created by marco on 5/02/16.
  */
 
 public class MapStage {
-    public void setTiles(Tile[][] tiles) {
-        this.tiles = tiles;
-    }
 
+    public class Room{
+        public final int x,y,width, height;
+
+        public Room(int x, int y, int width, int height) {
+            this.x = x;
+            this.y = y;
+            this.width = width;
+            this.height = height;
+        }
+    }
     private Tile[][] tiles;
-    private List<Rectangle> rooms = new ArrayList<>();
+
+    private List<int[]> walls = new ArrayList<>();
+
+    private List<Room> rooms = new ArrayList<>();
 
     public MapStage(int width, int height) {
         this.tiles = new Tile[width][height];
@@ -23,6 +35,10 @@ public class MapStage {
                 tiles[i][j] = Tile.EMPTY;
             }
         }
+    }
+
+    public void setTiles(Tile[][] tiles) {
+        this.tiles = tiles;
     }
 
     public Tile[][] getTiles() {
@@ -37,12 +53,25 @@ public class MapStage {
         return tiles.length;
     }
 
-    public List<Rectangle> getRooms() {
+    public List<int[]> getWalls() {
+        return walls;
+    }
+
+    public void addWall(int x, int y){
+        walls.add(new int[]{x,y});
+    }
+
+    public List<Room> getRooms() {
         return rooms;
     }
 
-    public void addRoom(Rectangle room){
-        rooms.add(new Rectangle(room));
+    public Room getRandomRoom(){
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+        return rooms.get(random.nextInt(0, rooms.size()));
+    }
+
+    public void addRoom(int x, int y, int width, int height){
+        rooms.add(new Room(x, y, width, height));
     }
 
     public void print(){
