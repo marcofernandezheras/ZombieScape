@@ -9,7 +9,11 @@ import java.util.List;
  */
 
 public class MapStage {
-    private final Tile[][] tiles;
+    public void setTiles(Tile[][] tiles) {
+        this.tiles = tiles;
+    }
+
+    private Tile[][] tiles;
     private List<Rectangle> rooms = new ArrayList<>();
 
     public MapStage(int width, int height) {

@@ -1,18 +1,22 @@
 package mapgenerator;
 
+import com.badlogic.gdx.graphics.Texture;
+
 /**
  * Created by marco on 5/02/16.
  */
 public class Tile {
 
-    static final Tile ROOM = new Tile("*", true);
-    static final Tile FLOOR = new Tile("#", true);
-    static final Tile WALL = new Tile("·", false);
-    static final Tile DOOR = new Tile("=", false);
-    static final Tile EMPTY = new Tile("EMPTY", true);
+    public static final Tile ROOM = new Tile("*", true);
+    public static final Tile FLOOR = new Tile("·", true);
+    public static final Tile WALL = new Tile("#", false);
+    public static final Tile DOOR = new Tile("=", false);
+    public static final Tile EMPTY = new Tile(" ", true);
 
     private final String name;
     private final boolean isPassable;
+    private Texture tex = null;
+
 
     public Tile(String name, boolean isPassable) {
         this.name = name;

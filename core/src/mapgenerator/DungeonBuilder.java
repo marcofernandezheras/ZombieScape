@@ -26,6 +26,33 @@ public class DungeonBuilder extends StageBuilder {
         }
     }
 
+    private static Tile[][] inflate(Tile[][] tiles){
+        Tile[][] inflated = new Tile[tiles.length * 2][tiles[0].length * 2];
+
+        int x = 0; int y = 0;
+        for (int i = 0; i < tiles.length; i++) {
+            for (int j = 0; j < tiles[0].length; j++) {
+                inflated[x][y] = tiles[i][j];
+                inflated[x][y+1] = tiles[i][j];
+                inflated[x+1][y] = tiles[i][j];
+                inflated[x+1][y+1] = tiles[i][j];
+                y+=2;
+            }
+            y = 0;
+            x+=2;
+        }
+
+        System.out.println("Map Stage: Inflated");
+        for (int i = 0; i < inflated[0].length; i++) {
+            for (int j = 0; j < inflated.length; j++) {
+                System.out.print(inflated[j][i]);
+            }
+            System.out.println();
+        }
+        System.out.println();
+        return inflated;
+    }
+
     private StageBuilderConfig config;
 
     public DungeonBuilder(StageBuilderConfig config) {
@@ -69,6 +96,9 @@ public class DungeonBuilder extends StageBuilder {
 
         _connectRegions();
         _removeDeadEnds();
+
+        stage.setTiles(inflate(stage.getTiles()));
+        stage.getRooms().forEach(r -> inflate(r));
     }
 
     private void _addRooms() {
@@ -106,6 +136,10 @@ public class DungeonBuilder extends StageBuilder {
         int x = random.nextInt(0,(stage.width() - width) / 2) * 2 + 1;
         int y = random.nextInt(0,(stage.height() - height) / 2) * 2 + 1;
         return _room.set(x,y,width,height);
+    }
+
+    private void inflate(Rectangle room){
+        room.set(room.x-1, room.y-1, room.width+2, room.height+2);
     }
 
     private Rectangle inflateRoom(Rectangle room){
