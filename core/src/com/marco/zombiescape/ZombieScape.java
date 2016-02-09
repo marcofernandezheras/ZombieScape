@@ -62,24 +62,6 @@ public class ZombieScape extends ApplicationAdapter {
         fdef.shape = shape;
 
         body.createFixture(fdef);
-
-        //ConeLight pointLight = new ConeLight(WorldMapFactory.rayHandler, 3, Color.RED, 10f, 1, 0, 0, 30);
-        //pointLight.setSoft(false);
-        //pointLight.attachToBody(body);
-
-        BodyDef def2 = new BodyDef();
-        def2.position.set(2,2);
-        Body body2 = world.createBody(def2);
-
-        PolygonShape shape2 = new PolygonShape();
-        shape2.setAsBox(0.5f, 0.5f);
-
-        FixtureDef fixtureDef = new FixtureDef();
-        fixtureDef.shape = shape2;
-
-        body2.createFixture(fixtureDef);
-
-        //new ConeLight(WorldMapFactory.rayHandler,15,Color.BLUE,150,0,0,45,30).setSoft(false);
     }
 
     Vector2 v = new Vector2();
@@ -98,7 +80,7 @@ public class ZombieScape extends ApplicationAdapter {
         if(Gdx.input.isKeyPressed(Input.Keys.RIGHT)) v.set(0.1f, 0);
         if(Gdx.input.isKeyPressed(Input.Keys.UP)) v.set(0, 0.1f);
         if(Gdx.input.isKeyPressed(Input.Keys.DOWN)) v.set(0, -0.1f);
-        if(Gdx.input.isKeyPressed(Input.Keys.P)) debug = !debug;
+        if(Gdx.input.isKeyJustPressed(Input.Keys.P)) debug = !debug;
 
 
         body.applyLinearImpulse(v,body.getWorldCenter(), true);
@@ -129,7 +111,7 @@ public class ZombieScape extends ApplicationAdapter {
 		combined.scale(Constants.METER2PIXEL, Constants.METER2PIXEL, 1);
 
         WorldMapFactory.rayHandler.setCombinedMatrix(combined);
-        WorldMapFactory.rayHandler.updateAndRender();
+        //WorldMapFactory.rayHandler.updateAndRender();
 
         if(debug)
 		debugRenderer.render(world, combined);

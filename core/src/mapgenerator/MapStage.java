@@ -21,6 +21,11 @@ public class MapStage {
             this.y = y;
             this.wallsAround = wallsAround;
         }
+
+        @Override
+        public String toString() {
+            return "["+x+","+y+"]";
+        }
     }
     private Tile[][] tiles;
 

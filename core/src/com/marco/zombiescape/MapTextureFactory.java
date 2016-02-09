@@ -105,8 +105,7 @@ public class MapTextureFactory {
                                 stage.addWall(x,y, wallsAround);
                             break;
                         case 7:
-                            if(paintWall7(tiles, x, y, wall_7, batch))
-                                stage.addWall(x,y, wallsAround);
+                            paintWall7(tiles, x, y, wall_7, batch);
                             break;
                         default:
                             batch.draw(wall_8_tex,TILE_SIZE * x, (TILE_SIZE * (tiles.length - y))-TILE_SIZE);
