@@ -22,11 +22,11 @@ public class MapTextureFactory {
 
     private static int getWallsAround(Tile[][] tiles, int x, int y){
         int count = 0;
-        for (int i = x - 1; i <= x + 1; i++) {
-            for (int j = y - 1; j <= y+1; j++) {
-                if(i == x && j == y) continue;//Skip self
-                if(i >= 0 && i < tiles[0].length && j >= 0 && j < tiles.length){
-                    if(tiles[i][j].equals(Tile.WALL)) count++;
+        for (int xi = x - 1; xi <= x + 1; xi++) {
+            for (int yj = y - 1; yj <= y+1; yj++) {
+                if(xi == x && yj == y) continue;//Skip self
+                if(xi >= 0 && xi < tiles[0].length && yj >= 0 && yj < tiles.length){
+                    if(tiles[yj][xi].equals(Tile.WALL)) count++;
                 }
             }
         }
@@ -35,19 +35,19 @@ public class MapTextureFactory {
 
     private static boolean[] getCardinal(Tile[][] tiles, int x, int y) throws ArrayIndexOutOfBoundsException{
         Arrays.fill(directionAux, false);
-        directionAux[0] = !tiles[x-1][y].equals(Tile.WALL);
-        directionAux[1] = !tiles[x][y+1].equals(Tile.WALL);
-        directionAux[2] = !tiles[x+1][y].equals(Tile.WALL);
-        directionAux[3] = !tiles[x][y-1].equals(Tile.WALL);
+        directionAux[0] = !tiles[y+1][x].equals(Tile.WALL);
+        directionAux[1] = !tiles[y][x+1].equals(Tile.WALL);
+        directionAux[2] = !tiles[y-1][x].equals(Tile.WALL);
+        directionAux[3] = !tiles[y][x-1].equals(Tile.WALL);
         return directionAux;
     }
 
     private static boolean[] getDiagonal(Tile[][] tiles, int x, int y) throws ArrayIndexOutOfBoundsException{
         Arrays.fill(directionAux, false);
-        directionAux[0] = !tiles[x-1][y-1].equals(Tile.WALL);
-        directionAux[1] = !tiles[x+1][y-1].equals(Tile.WALL);
-        directionAux[2] = !tiles[x+1][y+1].equals(Tile.WALL);
-        directionAux[3] = !tiles[x-1][y+1].equals(Tile.WALL);
+        directionAux[0] = !tiles[y+1][x+1].equals(Tile.WALL);
+        directionAux[1] = !tiles[y-1][x+1].equals(Tile.WALL);
+        directionAux[2] = !tiles[y-1][x-1].equals(Tile.WALL);
+        directionAux[3] = !tiles[y+1][x-1].equals(Tile.WALL);
         return directionAux;
     }
 
@@ -90,41 +90,39 @@ public class MapTextureFactory {
 
         batch.begin();
 
-        for (int i = 0; i < tiles[0].length; i++) {
-            for (int j = 0; j < tiles.length; j++) {
-
-                if(tiles[j][i].equals(Tile.WALL)){
-                    int wallsAround = getWallsAround(tiles, j, i);
+        for (int y = 0; y < tiles.length; y++) {
+            for (int x = 0; x < tiles[0].length; x++) {
+                if(tiles[y][x].equals(Tile.WALL)){
+                    int wallsAround = getWallsAround(tiles, x, y);
                     switch (wallsAround){
                         case 3:
-                            if(paintWall3(tiles, j, i, wall_3, batch))
-                                stage.addWall(j,i);
+                            if(paintWall3(tiles, x, y, wall_3, batch))
+                                stage.addWall(x,y, wallsAround);
                             break;
                         case 5:
                         case 6:
-                            if(paintWall5_6(tiles, j, i, wall_5, batch))
-                                stage.addWall(j,i);
+                            if(paintWall5_6(tiles, x, y, wall_5, batch))
+                                stage.addWall(x,y, wallsAround);
                             break;
                         case 7:
-                            if(paintWall7(tiles, j, i, wall_7, batch))
-                                stage.addWall(j,i);
+                            if(paintWall7(tiles, x, y, wall_7, batch))
+                                stage.addWall(x,y, wallsAround);
                             break;
                         default:
-                            batch.draw(wall_8_tex,TILE_SIZE * j, TILE_SIZE * i);
+                            batch.draw(wall_8_tex,TILE_SIZE * x, (TILE_SIZE * (tiles.length - y))-TILE_SIZE);
                     }
                 }
-                else if(tiles[j][i].equals(Tile.DOOR)){
+                else if(tiles[y][x].equals(Tile.DOOR)){
                     //TODO Doors
-                    floor.setPosition(TILE_SIZE * j, TILE_SIZE * i);
+                    floor.setPosition(TILE_SIZE * x, (TILE_SIZE * (tiles.length - y))-TILE_SIZE);
                     floor.draw(batch);
                 }
                 else{
-                    floor.setPosition(TILE_SIZE * j, TILE_SIZE * i);
+                    floor.setPosition(TILE_SIZE * x, (TILE_SIZE * (tiles.length - y))-TILE_SIZE);
                     floor.draw(batch);
                 }
             }
         }
-
 
         batch.end();
         fbo.end();
@@ -141,79 +139,81 @@ public class MapTextureFactory {
         return fbo.getColorBufferTexture();
     }
 
-    private static boolean paintWall7(Tile[][] tiles, int x, int y, Sprite sprite, SpriteBatch batch) {
+    private static boolean paintWall7(Tile[][] tiles, int x, int y, Sprite wall7, SpriteBatch batch) {
         try {
-            boolean[] cardinal = getDiagonal(tiles, x, y);
+            boolean[] diagonal = getDiagonal(tiles, x, y);
 
-            if(cardinal[0] ){
-                sprite.setPosition(TILE_SIZE * x, TILE_SIZE * y);
-                sprite.draw(batch);
-                return true;
-            }
-            else if(cardinal[1] ){
-                sprite.flip(true,false);
-                sprite.setPosition(TILE_SIZE * x, TILE_SIZE * y);
-                sprite.draw(batch);
-                sprite.flip(true,false);
+            if(diagonal[0] ){
+                wall7.flip(true,false);
+                wall7.setPosition(TILE_SIZE * x, (TILE_SIZE * (tiles.length - y))-TILE_SIZE);
+                wall7.draw(batch);
+                wall7.flip(true,false);
                 return true;
 
             }
-            else if(cardinal[2] ){
-                sprite.flip(true,true);
-                sprite.setPosition(TILE_SIZE * x, TILE_SIZE * y);
-                sprite.draw(batch);
-                sprite.flip(true,true);
+            else if(diagonal[1] ){
+                wall7.flip(true,true);
+                wall7.setPosition(TILE_SIZE * x, (TILE_SIZE * (tiles.length - y))-TILE_SIZE);
+                wall7.draw(batch);
+                wall7.flip(true,true);
                 return true;
             }
-            else if(cardinal[3]){
-                sprite.flip(false,true);
-                sprite.setPosition(TILE_SIZE * x, TILE_SIZE * y);
-                sprite.draw(batch);
-                sprite.flip(false,true);
+            else if(diagonal[2] ){
+                wall7.flip(false,true);
+                wall7.setPosition(TILE_SIZE * x, (TILE_SIZE * (tiles.length - y))-TILE_SIZE);
+                wall7.draw(batch);
+                wall7.flip(false,true);
                 return true;
+
+            }
+            else if(diagonal[3]){
+                wall7.setPosition(TILE_SIZE * x, (TILE_SIZE * (tiles.length - y))-TILE_SIZE);
+                wall7.draw(batch);
+                return true;
+
             }
         }
         catch (Exception e){
             //wtf!?
-            batch.draw(wall_8_tex, TILE_SIZE * x, TILE_SIZE * y);
+            batch.draw(wall_8_tex, TILE_SIZE * x, (TILE_SIZE * (tiles.length - y))-TILE_SIZE);
         }
         return false;
     }
 
-    private static boolean paintWall3(Tile[][] tiles, int x, int y, Sprite sprite, SpriteBatch batch) {
+    private static boolean paintWall3(Tile[][] tiles, int x, int y, Sprite wall3, SpriteBatch batch) {
         try {
             boolean[] cardinal = getCardinal(tiles, x, y);
 
             if(cardinal[0] && cardinal[1]){
-                sprite.flip(false,true);
-                sprite.setPosition(TILE_SIZE * x, TILE_SIZE * y);
-                sprite.draw(batch);
-                sprite.flip(false,true);
+                wall3.flip(true,false);
+                wall3.setPosition(TILE_SIZE * x, (TILE_SIZE * (tiles.length - y))-TILE_SIZE);
+                wall3.draw(batch);
+                wall3.flip(true,false);
                 return true;
             }
             else if(cardinal[1] && cardinal[2]){
-                sprite.flip(true,true);
-                sprite.setPosition(TILE_SIZE * x, TILE_SIZE * y);
-                sprite.draw(batch);
-                sprite.flip(true,true);
+                wall3.flip(true,true);
+                wall3.setPosition(TILE_SIZE * x, (TILE_SIZE * (tiles.length - y))-TILE_SIZE);
+                wall3.draw(batch);
+                wall3.flip(true,true);
                 return true;
             }
             else if(cardinal[2] && cardinal[3]){
-                sprite.flip(true,false);
-                sprite.setPosition(TILE_SIZE * x, TILE_SIZE * y);
-                sprite.draw(batch);
-                sprite.flip(true,false);
+                wall3.flip(false,true);
+                wall3.setPosition(TILE_SIZE * x, (TILE_SIZE * (tiles.length - y))-TILE_SIZE);
+                wall3.draw(batch);
+                wall3.flip(false,true);
                 return true;
             }
             else if(cardinal[0] && cardinal[3]){
-                sprite.setPosition(TILE_SIZE * x, TILE_SIZE * y);
-                sprite.draw(batch);
+                wall3.setPosition(TILE_SIZE * x, (TILE_SIZE * (tiles.length - y))-TILE_SIZE);
+                wall3.draw(batch);
                 return true;
             }
         }
         catch (Exception e){
             //Corners of the map
-            batch.draw(wall_8_tex, TILE_SIZE * x, TILE_SIZE * y);
+            batch.draw(wall_8_tex, TILE_SIZE * x, (TILE_SIZE * (tiles.length - y))-TILE_SIZE);
         }
         return false;
     }
@@ -224,35 +224,35 @@ public class MapTextureFactory {
             boolean[] cardinal = getCardinal(tiles, x, y);
 
             if(cardinal[0]) {
-                sprite.rotate(270);
-                sprite.setPosition(TILE_SIZE * x, TILE_SIZE * y);
+                sprite.setPosition(TILE_SIZE * x, (TILE_SIZE * (tiles.length - y))-TILE_SIZE);
                 sprite.draw(batch);
-                sprite.rotate(-270);
                 return true;
             }
             else if(cardinal[1]){
-                sprite.flip(false,true);
-                sprite.setPosition(TILE_SIZE * x, TILE_SIZE * y);
-                sprite.draw(batch);
-                sprite.flip(false,true);
-                return true;
-            }
-            else if(cardinal[2]){
                 sprite.rotate(90);
-                sprite.setPosition(TILE_SIZE * x, TILE_SIZE * y);
+                sprite.setPosition(TILE_SIZE * x, (TILE_SIZE * (tiles.length - y))-TILE_SIZE);
                 sprite.draw(batch);
                 sprite.rotate(-90);
                 return true;
             }
-            else if(cardinal[3]){
-                sprite.setPosition(TILE_SIZE * x, TILE_SIZE * y);
+            else if(cardinal[2]){
+                sprite.flip(false,true);
+                sprite.setPosition(TILE_SIZE * x, (TILE_SIZE * (tiles.length - y))-TILE_SIZE);
                 sprite.draw(batch);
+                sprite.flip(false,true);
+                return true;
+            }
+            else if(cardinal[3]){
+                sprite.rotate(270);
+                sprite.setPosition(TILE_SIZE * x, (TILE_SIZE * (tiles.length - y))-TILE_SIZE);
+                sprite.draw(batch);
+                sprite.rotate(-270);
                 return true;
             }
         }
         catch (Exception e){
             //Border of the map
-            batch.draw(wall_8_tex, TILE_SIZE * x, TILE_SIZE * y);
+            batch.draw(wall_8_tex, TILE_SIZE * x, (TILE_SIZE * (tiles.length - y))-TILE_SIZE);
         }
         return false;
     }

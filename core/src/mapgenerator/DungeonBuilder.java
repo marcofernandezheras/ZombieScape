@@ -77,7 +77,6 @@ public class DungeonBuilder extends StageBuilder {
 
         _addRooms();
 
-        stage.print();
         // Fill in all of the empty space with mazes.
         for (int y = 1; y < stage.height(); y += 2) {
             for (int x = 1; x < stage.width(); x += 2) {

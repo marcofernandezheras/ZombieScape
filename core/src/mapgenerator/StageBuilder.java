@@ -16,7 +16,7 @@ public abstract class StageBuilder {
 
     Tile getTile(int x, int y)
     {
-        return stage.getTiles()[x][y];
+        return stage.getTiles()[y][x];
     }
 
     void setTile(Vector2 pos, Tile type){
@@ -24,7 +24,7 @@ public abstract class StageBuilder {
     }
 
     void setTile(int x, int y, Tile tile) {
-        stage.getTiles()[x][y] = tile;
+        stage.getTiles()[y][x] = tile;
     }
 
     void fill(Tile tile) {
