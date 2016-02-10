@@ -15,6 +15,8 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.*;
+import com.badlogic.gdx.physics.box2d.joints.FrictionJoint;
+import com.badlogic.gdx.physics.box2d.joints.FrictionJointDef;
 import mapgenerator.DungeonBuilder;
 import mapgenerator.MapStage;
 import mapgenerator.StageBuilderConfig;
@@ -27,10 +29,9 @@ public class ZombieScape extends ApplicationAdapter {
 	OrthographicCamera camera;
 	Box2DDebugRenderer debugRenderer;
 	World world;
-
+    Player player;
 	int x = -128 , y = -128;
-    private Body body;
-    boolean debug = true;
+    boolean debug = true, ligths = true;
 
     @Override
 	public void create () {
@@ -39,7 +40,7 @@ public class ZombieScape extends ApplicationAdapter {
 		camera = new OrthographicCamera();
 		debugRenderer = new Box2DDebugRenderer();
 		DungeonBuilder dungeonBuilder = new DungeonBuilder(new StageBuilderConfig());
-		MapStage stage = new MapStage(31, 11);
+		MapStage stage = new MapStage(21, 21);
 		dungeonBuilder.generate(stage);
 
 		stage.print();
@@ -50,70 +51,57 @@ public class ZombieScape extends ApplicationAdapter {
         Vector2 v2 = new Vector2();
         stage.getRandomRoom().getCenter(v2);
 
-        BodyDef def = new BodyDef();
-        def.type = BodyDef.BodyType.DynamicBody;
-        def.position.set( v2.x, v2.y);
-        body = world.createBody(def);
+        ThreadLocalRandom random = ThreadLocalRandom.current();
+//        stage.getWalls().stream().filter(w -> random.nextInt(0,100) < 5).forEach(w ->{
+//            PointLight light = new PointLight(WorldMapFactory.rayHandler, 10, null, 1, w.x* 0.5f, w.y* 0.5f);
+//            light.setStaticLight(true);
+//            light.setSoft(false);
+//        });
 
-        PolygonShape shape = new PolygonShape();
-        shape.setAsBox(0.15f, 0.15f);
-
-        FixtureDef fdef = new FixtureDef();
-        fdef.shape = shape;
-
-        body.createFixture(fdef);
+        player = new Player(world, v2.x , v2.y);
     }
 
     Vector2 v = new Vector2();
 	@Override
 	public void render () {
-		Gdx.gl.glClearColor(0, 0, 0, 1);
-		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-		camera.setToOrtho(false);
-        v.set(0,0);
-        if(Gdx.input.isKeyPressed(Input.Keys.A)) x-=10;
-        if(Gdx.input.isKeyPressed(Input.Keys.D)) x+=10;
-        if(Gdx.input.isKeyPressed(Input.Keys.W)) y+=10;
-        if(Gdx.input.isKeyPressed(Input.Keys.S)) y-=10;
+        Gdx.gl.glClearColor(0, 0, 0, 1);
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+        camera.setToOrtho(false);
 
-        if(Gdx.input.isKeyPressed(Input.Keys.LEFT)) v.set(-0.1f, 0);
-        if(Gdx.input.isKeyPressed(Input.Keys.RIGHT)) v.set(0.1f, 0);
-        if(Gdx.input.isKeyPressed(Input.Keys.UP)) v.set(0, 0.1f);
-        if(Gdx.input.isKeyPressed(Input.Keys.DOWN)) v.set(0, -0.1f);
-        if(Gdx.input.isKeyJustPressed(Input.Keys.P)) debug = !debug;
+        if (Gdx.input.isKeyJustPressed(Input.Keys.P)) debug = !debug;
+        if (Gdx.input.isKeyJustPressed(Input.Keys.L)) ligths = !ligths;
 
 
-        body.applyLinearImpulse(v,body.getWorldCenter(), true);
-        world.step(Gdx.graphics.getDeltaTime(), 6,2);
 
-        camera.zoom = 1;
-        camera.translate(x,y);
-
-
+        camera.translate((player.getX() * Constants.METER2PIXEL) - Gdx.graphics.getWidth()*1.5f/2 ,
+                player.getY() * Constants.METER2PIXEL - Gdx.graphics.getHeight()*1.5f/2);
+        camera.zoom = 2f;
         camera.update();
 
-        if(Gdx.input.isButtonPressed(0)){
-            Vector3 unproject = camera.unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0));
-            float mx = unproject.x * Constants.PIXEL2METER;
-            float my = unproject.y * Constants.PIXEL2METER;
-            new ConeLight(WorldMapFactory.rayHandler,15,null,5,mx,my,0,25).setSoftnessLength(0.01f);
-            //new PointLight(WorldMapFactory.rayHandler, 50, Color.BLUE, 1, mx, my).setSoft(false);
+        Vector3 unproject = camera.unproject(new Vector3(Gdx.input.getX(), Gdx.input.getY(), 0));
+        float mx = unproject.x * Constants.PIXEL2METER;
+        float my = unproject.y * Constants.PIXEL2METER;
+
+
+        player.act(mx, my);
+
+        world.step(Gdx.graphics.getDeltaTime(), 6, 2);
+
+        batch.setProjectionMatrix(camera.combined);
+        batch.begin();
+        batch.draw(img, 0, 0);
+        player.draw(batch);
+        batch.end();
+
+
+        Matrix4 combined = new Matrix4(camera.combined);
+        combined.scale(Constants.METER2PIXEL, Constants.METER2PIXEL, 1);
+
+        if (ligths){
+            WorldMapFactory.rayHandler.setCombinedMatrix(combined);
+            WorldMapFactory.rayHandler.updateAndRender();
         }
 
-		batch.setProjectionMatrix(camera.combined);
-		batch.begin();
-		batch.draw(img,0,0);
-		batch.end();
-
-
-		camera.update();
-		Matrix4 combined = new Matrix4(camera.combined);
-		combined.scale(Constants.METER2PIXEL, Constants.METER2PIXEL, 1);
-
-        WorldMapFactory.rayHandler.setCombinedMatrix(combined);
-        //WorldMapFactory.rayHandler.updateAndRender();
-
-        if(debug)
-		debugRenderer.render(world, combined);
+        if(debug) debugRenderer.render(world, combined);
 	}
 }

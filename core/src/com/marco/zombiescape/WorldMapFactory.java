@@ -17,6 +17,12 @@ public class WorldMapFactory {
 
     public static RayHandler rayHandler;
 
+    public static Body getGroundBody() {
+        return groundBody;
+    }
+
+    private static Body groundBody;
+
     public static World getWorldFor(MapStage stage){
 
         BodyDef bDef = new BodyDef();
@@ -111,6 +117,20 @@ public class WorldMapFactory {
         }
 
         shape.dispose();
+
+        BodyDef groundBodyDef = new BodyDef();
+        groundBodyDef.type = BodyDef.BodyType.StaticBody;
+        groundBodyDef.position.set(stage.width()/4, stage.height()/4);
+        groundBody = world.createBody(groundBodyDef);
+        PolygonShape groundshape = new PolygonShape();
+        groundshape.setAsBox(stage.width()/4 + 0.5f, stage.height()/4 + 0.5f);
+        FixtureDef groundFixture = new FixtureDef();
+        groundFixture.density=0.0f;
+        groundFixture.shape = groundshape;
+        groundFixture.restitution = .5f;
+        groundFixture.friction=0f;
+        groundBody.createFixture(groundFixture);
+        groundshape.dispose();
 
         RayHandler.useDiffuseLight(true);
         RayHandler.setGammaCorrection(true);
