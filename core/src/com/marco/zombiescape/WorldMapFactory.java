@@ -129,7 +129,8 @@ public class WorldMapFactory {
         groundFixture.shape = groundshape;
         groundFixture.restitution = .5f;
         groundFixture.friction=0f;
-        groundBody.createFixture(groundFixture);
+        Fixture fixture = groundBody.createFixture(groundFixture);
+        fixture.setUserData(WorldMapFactory.class);
         groundshape.dispose();
 
         RayHandler.useDiffuseLight(true);

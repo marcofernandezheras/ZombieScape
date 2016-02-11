@@ -12,12 +12,17 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.physics.box2d.joints.FrictionJointDef;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static java.lang.Math.*;
 
 /**
  * Created by marco on 10/02/16.
  */
 public class Player {
+
+    private World world;
 
     private static final class Direction {
         static final int UP = 0, RIGTH = 1, DOWN = 2, LEFT = 3;
@@ -67,17 +72,64 @@ public class Player {
     private ConeLight ligth;
     private float delta;
     private int frame = 0;
+    private List<Body> toDelete = new ArrayList<>();
 
     public Player(World world, float x, float y) {
+        this.world = world;
         body = createBody(world, x, y);
         PointLight pointLight = new PointLight(WorldMapFactory.rayHandler, 15, null, .5f, body.getWorldCenter().x, body.getWorldCenter().y);
         pointLight.attachToBody(body);
         pointLight.setSoft(false);
 
-        ligth = new ConeLight(WorldMapFactory.rayHandler,15, Color.WHITE, 5.5f, body.getWorldCenter().x, body.getWorldCenter().y, (float) toRadians(90), 25f);
+        ligth = new ConeLight(WorldMapFactory.rayHandler,15, Color.WHITE, 15.5f, body.getWorldCenter().x, body.getWorldCenter().y, (float) toRadians(90), 25f);
         ligth.attachToBody(ligthBody);
         ligth.setSoftnessLength(.5f);
         createFriction(world);
+
+        world.setContactFilter(new ContactFilter() {
+            @Override
+            public boolean shouldCollide(Fixture fixtureA, Fixture fixtureB) {
+                Object userData = fixtureA.getUserData();
+                Object userData1 = fixtureB.getUserData();
+                if(userData == Player.this || userData1 == Player.this){
+                    return !"BULLET".equals(userData) && !"BULLET".equals(userData1);
+                }
+                return userData != userData1;
+            }
+        });
+
+        world.setContactListener(new ContactListener() {
+            @Override
+            public void beginContact(Contact contact) {
+                Object userData = contact.getFixtureA().getUserData();
+                Object userData1 = contact.getFixtureB().getUserData();
+                if("BULLET".equals(userData) || "BULLET".equals(userData1)){
+                    if(userData == null || userData1 == null){//Wall
+                        if("BULLET".equals(userData)) {
+                            toDelete.add(contact.getFixtureA().getBody());
+                        }
+                        if("BULLET".equals(userData1)) {
+                            toDelete.add(contact.getFixtureB().getBody());
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void endContact(Contact contact) {
+
+            }
+
+            @Override
+            public void preSolve(Contact contact, Manifold oldManifold) {
+
+            }
+
+            @Override
+            public void postSolve(Contact contact, ContactImpulse impulse) {
+
+            }
+        });
     }
 
     private Body createBody(World world, float x, float y) {
@@ -95,7 +147,8 @@ public class Player {
         FixtureDef fdef = new FixtureDef();
         fdef.shape = shape;
 
-        body.createFixture(fdef);
+        Fixture fixture = body.createFixture(fdef);
+        fixture.setUserData(this);
 
         ligthBody = world.createBody(def);
 
@@ -103,6 +156,7 @@ public class Player {
     }
 
     private void createFriction(World world) {
+
         FrictionJointDef frictionJointDef = new FrictionJointDef();
 
         frictionJointDef.localAnchorA.set(0,0);
@@ -118,7 +172,14 @@ public class Player {
     }
 
     public void draw(SpriteBatch batch){
+        for (int i = 0; i < toDelete.size(); i++) {
+            try {
+                toDelete.get(i).getFixtureList().get(0).setUserData(null);
+                world.destroyBody(toDelete.get(i));
+            } catch (Exception e) {/* Already destroyed? */}
 
+        }
+        toDelete.clear();
         Sprite currentSprite;
         if (body.getLinearVelocity().len() == 0)
             frame = 0;
@@ -151,6 +212,7 @@ public class Player {
     }
 
 
+    public float x = 0;
     public void act(float mx, float my){
         delta += Gdx.graphics.getDeltaTime();
         if(delta> .05){
@@ -191,7 +253,45 @@ public class Player {
             currentDirection = Direction.LEFT;
         }
 
+        x += Gdx.graphics.getDeltaTime();
+
+        if(Gdx.input.isButtonPressed(0) && x > .05){
+            x = 0;
+            shooTo(deltaX, deltaY);
+        }
+
         body.applyLinearImpulse(velocity, center, true);
         Vector2 v = body.getLinearVelocity();
+    }
+
+    private void shooTo(float x, float y) {
+        BodyDef def = new BodyDef();
+        def.type = BodyDef.BodyType.DynamicBody;
+        def.bullet = true;
+        def.position.set(body.getWorldCenter().x, body.getWorldCenter().y);
+        def.linearVelocity.set(x,y).nor().scl(30);
+        Body bullet = world.createBody(def);
+
+        PolygonShape shape = new PolygonShape();
+        shape.setAsBox(0.05f, 0.05f);
+
+        FixtureDef fixtureDef = new FixtureDef();
+        fixtureDef.shape = shape;
+
+        Fixture fixture = bullet.createFixture(fixtureDef);
+        fixture.setUserData("BULLET");
+
+        FrictionJointDef frictionJointDef = new FrictionJointDef();
+
+        frictionJointDef.localAnchorA.set(0,0);
+        frictionJointDef.localAnchorB.set(0,0);
+
+        frictionJointDef.bodyA = bullet;
+        frictionJointDef.bodyB = WorldMapFactory.getGroundBody();
+
+        frictionJointDef.maxForce = 0f; //This the most force the joint will apply to your object. The faster its moving the more force applied
+        frictionJointDef.maxTorque = 0; //Set to 0 to prevent rotation
+
+        world.createJoint(frictionJointDef);
     }
 }

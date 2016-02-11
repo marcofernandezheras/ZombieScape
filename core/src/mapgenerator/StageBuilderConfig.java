@@ -8,7 +8,7 @@ public class StageBuilderConfig {
     int extraConnectorChance = 20;
 
     // Increasing this allows rooms to be larger.
-    int roomExtraSize = 0;
+    int roomExtraSize = 1;
 
     int windingPercent = 10;
 
