@@ -13,6 +13,18 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class MapStage {
 
+    public boolean blocked(int x, int y) {
+        return !tiles[y][x].isPassable();
+    }
+
+    public float getCost(int sx, int sy, int tx, int ty) {
+        return 1;
+    }
+
+    public void pathFinderVisited(int x, int y) {
+        tiles[y][x].setVisited(true);
+    }
+
     public static class Wall{
         public int x, y, wallsAround;
 

@@ -11,6 +11,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.physics.box2d.joints.FrictionJointDef;
+import com.badlogic.gdx.utils.Disposable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,6 +66,21 @@ public class Player {
         };
     }
 
+    public static void dispose(){
+        for (Sprite sprite : Direction.up) {
+            sprite.getTexture().dispose();
+        }
+        for (Sprite sprite : Direction.down) {
+            sprite.getTexture().dispose();
+        }
+        for (Sprite sprite : Direction.left) {
+            sprite.getTexture().dispose();
+        }
+        for (Sprite sprite : Direction.right) {
+            sprite.getTexture().dispose();
+        }
+    }
+
     private int currentDirection = Direction.DOWN;
     private final Body body;
     private Body ligthBody;
@@ -72,7 +88,8 @@ public class Player {
     private ConeLight ligth;
     private float delta;
     private int frame = 0;
-    private List<Body> toDelete = new ArrayList<>();
+    private List<Deleteable> toDelete = new ArrayList<>();
+    private List<Bullet> bullets = new ArrayList<>();
 
     public Player(World world, float x, float y) {
         this.world = world;
@@ -92,8 +109,32 @@ public class Player {
                 Object userData = fixtureA.getUserData();
                 Object userData1 = fixtureB.getUserData();
                 if(userData == Player.this || userData1 == Player.this){
-                    return !"BULLET".equals(userData) && !"BULLET".equals(userData1);
+                    if(userData instanceof Zombie || userData1 instanceof Zombie){
+                        if(userData instanceof Player) {
+                            Zombie z = (Zombie)userData1;
+                            z.setAggro((Player) userData);
+                        }
+                        if(userData1 instanceof Player) {
+                            Zombie z = (Zombie)userData;
+                            z.setAggro((Player) userData1);
+                        }
+                    }
+                    return !(userData instanceof Bullet) && !(userData1 instanceof Bullet);
                 }
+                if(userData instanceof Zombie || userData1 instanceof Zombie){
+                    if(userData == null || userData1 == null) {
+                        if(userData == null) {
+                            Zombie z = (Zombie)userData1;
+                            z.changeDirection();
+                        }
+                        if(userData1 == null) {
+                            Zombie z = (Zombie)userData;
+                            z.changeDirection();
+                        }
+                        return false;
+                    }
+                }
+                if(userData instanceof Bullet && userData1 instanceof Bullet) return false;
                 return userData != userData1;
             }
         });
@@ -103,13 +144,39 @@ public class Player {
             public void beginContact(Contact contact) {
                 Object userData = contact.getFixtureA().getUserData();
                 Object userData1 = contact.getFixtureB().getUserData();
-                if("BULLET".equals(userData) || "BULLET".equals(userData1)){
+                if(userData instanceof Bullet || userData1 instanceof Bullet){
                     if(userData == null || userData1 == null){//Wall
-                        if("BULLET".equals(userData)) {
-                            toDelete.add(contact.getFixtureA().getBody());
+                        if(userData instanceof Bullet) {
+                            Bullet b = (Bullet) userData;
+                            if(!toDelete.contains(b))
+                                toDelete.add(b);
                         }
-                        if("BULLET".equals(userData1)) {
-                            toDelete.add(contact.getFixtureB().getBody());
+                        if(userData1 instanceof Bullet) {
+                            Bullet b = (Bullet) userData1;
+                            if(!toDelete.contains(b))
+                                toDelete.add(b);
+                        }
+                    }
+                    else if(userData instanceof Zombie || userData1 instanceof Zombie){
+                        if(userData instanceof Bullet) {
+                            Bullet b = (Bullet) userData;
+                            if(!toDelete.contains(b))
+                                toDelete.add(b);
+                            Hitable hitable = (Hitable)userData1;
+                            hitable.hit();
+                            if(hitable.getLife() <= 0){
+                                toDelete.add((Deleteable) userData1);
+                            }
+                        }
+                        if(userData1 instanceof Bullet) {
+                            Bullet b = (Bullet) userData1;
+                            if(!toDelete.contains(b))
+                                toDelete.add(b);
+                            Hitable hitable = (Hitable)userData;
+                            hitable.hit();
+                            if(hitable.getLife() <= 0){
+                                toDelete.add((Deleteable) userData1);
+                            }
                         }
                     }
                 }
@@ -122,7 +189,15 @@ public class Player {
 
             @Override
             public void preSolve(Contact contact, Manifold oldManifold) {
-
+                Object userData = contact.getFixtureA().getUserData();
+                Object userData1 = contact.getFixtureB().getUserData();
+                if(userData instanceof Bullet || userData1 instanceof Bullet){
+                    if(userData instanceof Zombie || userData1 instanceof Zombie){
+                        contact.getFixtureA().getBody().setLinearVelocity(0,0);
+                        contact.getFixtureB().getBody().setLinearVelocity(0,0);
+                        contact.setEnabled(false);
+                    }
+                }
             }
 
             @Override
@@ -152,6 +227,21 @@ public class Player {
 
         ligthBody = world.createBody(def);
 
+
+        FixtureDef aggroSensorDef = new FixtureDef();
+
+        CircleShape aggroShape = new CircleShape();
+        aggroShape.setRadius(5);
+
+        aggroSensorDef.shape = aggroShape;
+        aggroSensorDef.isSensor = true;
+        Fixture aggroFix = body.createFixture(aggroSensorDef);
+
+        aggroFix.setUserData(this);
+
+
+        shape.dispose();
+        aggroShape.dispose();
         return body;
     }
 
@@ -171,17 +261,19 @@ public class Player {
         world.createJoint(frictionJointDef);
     }
 
-    public void draw(SpriteBatch batch){
+    public void draw(final SpriteBatch batch){
         for (int i = 0; i < toDelete.size(); i++) {
-            try {
-                toDelete.get(i).getFixtureList().get(0).setUserData(null);
-                world.destroyBody(toDelete.get(i));
-            } catch (Exception e) {/* Already destroyed? */}
 
+            if(toDelete.get(i) instanceof Disposable){
+                ((Disposable)toDelete.get(i)).dispose();
+            }
+
+            if(toDelete.get(i) instanceof Bullet)
+                bullets.remove(toDelete.get(i));
         }
         toDelete.clear();
         Sprite currentSprite;
-        if (body.getLinearVelocity().len() == 0)
+        if (body.getLinearVelocity().len() <= 0)
             frame = 0;
         switch (currentDirection){
             case Direction.UP:
@@ -201,6 +293,7 @@ public class Player {
         currentSprite.setPosition((worldCenter.x * Constants.METER2PIXEL) - currentSprite.getWidth()/2,
                 worldCenter.y * Constants.METER2PIXEL - currentSprite.getHeight()/4);
         currentSprite.draw(batch);
+        bullets.forEach(b -> b.draw(batch));
     }
 
     public float getX(){
@@ -210,7 +303,6 @@ public class Player {
     public float getY(){
         return body.getWorldCenter().y;
     }
-
 
     public float x = 0;
     public void act(float mx, float my){
@@ -222,16 +314,16 @@ public class Player {
         velocity.set(0,0);
         Vector2 center = body.getWorldCenter();
         if(Gdx.input.isKeyPressed(Input.Keys.A)){
-            velocity.set(-0.08f, 0);
+            velocity.set(-0.07f, 0);
         }
         if(Gdx.input.isKeyPressed(Input.Keys.D)) {
-            velocity.set(0.08f, 0);
+            velocity.set(0.07f, 0);
         }
         if(Gdx.input.isKeyPressed(Input.Keys.W)) {
-            velocity.set(0, 0.08f);
+            velocity.set(0, 0.07f);
         }
         if(Gdx.input.isKeyPressed(Input.Keys.S)){
-            velocity.set(0, -0.08f);
+            velocity.set(0, -0.07f);
         }
         float deltaX = mx - center.x;
         float deltaY = my - center.y;
@@ -265,33 +357,7 @@ public class Player {
     }
 
     private void shooTo(float x, float y) {
-        BodyDef def = new BodyDef();
-        def.type = BodyDef.BodyType.DynamicBody;
-        def.bullet = true;
-        def.position.set(body.getWorldCenter().x, body.getWorldCenter().y);
-        def.linearVelocity.set(x,y).nor().scl(30);
-        Body bullet = world.createBody(def);
-
-        PolygonShape shape = new PolygonShape();
-        shape.setAsBox(0.05f, 0.05f);
-
-        FixtureDef fixtureDef = new FixtureDef();
-        fixtureDef.shape = shape;
-
-        Fixture fixture = bullet.createFixture(fixtureDef);
-        fixture.setUserData("BULLET");
-
-        FrictionJointDef frictionJointDef = new FrictionJointDef();
-
-        frictionJointDef.localAnchorA.set(0,0);
-        frictionJointDef.localAnchorB.set(0,0);
-
-        frictionJointDef.bodyA = bullet;
-        frictionJointDef.bodyB = WorldMapFactory.getGroundBody();
-
-        frictionJointDef.maxForce = 0f; //This the most force the joint will apply to your object. The faster its moving the more force applied
-        frictionJointDef.maxTorque = 0; //Set to 0 to prevent rotation
-
-        world.createJoint(frictionJointDef);
+        Vector2 worldCenter = body.getWorldCenter();
+        bullets.add(new Bullet(worldCenter.x, worldCenter.y, x, y));
     }
 }

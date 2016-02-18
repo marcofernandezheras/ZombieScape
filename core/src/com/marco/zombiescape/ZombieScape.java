@@ -1,11 +1,9 @@
 package com.marco.zombiescape;
 
-import box2dLight.ConeLight;
 import box2dLight.PointLight;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
@@ -16,15 +14,15 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.*;
-import com.badlogic.gdx.physics.box2d.joints.FrictionJoint;
-import com.badlogic.gdx.physics.box2d.joints.FrictionJointDef;
 import mapgenerator.DungeonBuilder;
 import mapgenerator.MapStage;
 import mapgenerator.StageBuilderConfig;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class ZombieScape extends ApplicationAdapter {
+public class ZombieScape extends ApplicationAdapter implements Hitable.HitableListener{
 	SpriteBatch batch;
 	Texture img;
 	OrthographicCamera camera;
@@ -34,7 +32,8 @@ public class ZombieScape extends ApplicationAdapter {
 	int x = -128 , y = -128;
     boolean debug = true, ligths = true;
     private ParticleEffect pe;
-
+    private List<Zombie> zombies = new ArrayList<>();
+    private List<Zombie> deleteZ = new ArrayList<>();
     @Override
 	public void create () {
 		Box2D.init();
@@ -51,14 +50,8 @@ public class ZombieScape extends ApplicationAdapter {
 		world = WorldMapFactory.getWorldFor(stage);
 
         Vector2 v2 = new Vector2();
-        stage.getRandomRoom().getCenter(v2);
-
-        ThreadLocalRandom random = ThreadLocalRandom.current();
-//        stage.getWalls().stream().filter(w -> random.nextInt(0,100) < 5).forEach(w ->{
-//            PointLight light = new PointLight(WorldMapFactory.rayHandler, 10, null, 1, w.x* 0.5f, w.y* 0.5f);
-//            light.setStaticLight(true);
-//            light.setSoft(false);
-//        });
+        Rectangle randomRoom = stage.getRandomRoom();
+        randomRoom.getCenter(v2);
 
         player = new Player(world, v2.x , v2.y);
 
@@ -68,6 +61,18 @@ public class ZombieScape extends ApplicationAdapter {
         pe.start();
 
         new PointLight(WorldMapFactory.rayHandler, 15, null, 5, player.getX(), player.getY());
+
+        stage.getRooms().forEach(r -> {
+            ThreadLocalRandom rdn = ThreadLocalRandom.current();
+            int maxZombies = (int) Math.ceil(r.getWidth() * r.getHeight() / 4.0);
+            if(r != randomRoom) {
+                for (int i = 0; i < maxZombies; i++) {
+                    Zombie zombie = new Zombie(world, (float)rdn.nextDouble(r.getX()+0.5f, r.getX() - 0.5f + r.getWidth()), (float)rdn.nextDouble(r.getY() + 0.5f, r.getY() - 0.5f + r.getHeight()));
+                    zombie.addHitListener(ZombieScape.this);
+                    zombies.add(zombie);
+                }
+            }
+        });
     }
 
     Vector2 v = new Vector2();
@@ -92,6 +97,7 @@ public class ZombieScape extends ApplicationAdapter {
 
 
         player.act(mx, my);
+        //zombies.forEach(z -> z.act());
 
         world.step(Gdx.graphics.getDeltaTime(), 6, 2);
 
@@ -103,9 +109,14 @@ public class ZombieScape extends ApplicationAdapter {
 
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
-        batch.draw(img, 0, 0);
+        batch.draw(img,(int)((player.getX() * Constants.METER2PIXEL) - (camera.viewportWidth)),
+                       (int)(player.getY() * Constants.METER2PIXEL - (camera.viewportHeight)),
+                       (int)((player.getX() * Constants.METER2PIXEL) - camera.viewportWidth),
+                       (int)(img.getHeight() - (player.getY() * Constants.METER2PIXEL + camera.viewportHeight)),
+                       (int)camera.viewportWidth*2, (int)camera.viewportHeight*2);
         player.draw(batch);
         pe.draw(batch);
+        zombies.forEach(z -> z.draw(batch));
         batch.end();
 
         Matrix4 combined = new Matrix4(camera.combined);
@@ -116,6 +127,30 @@ public class ZombieScape extends ApplicationAdapter {
             WorldMapFactory.rayHandler.updateAndRender();
         }
 
+        deleteZ.forEach(z -> {
+            z.dispose();
+            zombies.remove(z);
+        });
+
+        deleteZ.clear();
         if(debug) debugRenderer.render(world, combined);
 	}
+
+    @Override
+    public void dispose() {
+        super.dispose();
+        batch.dispose();
+        Player.dispose();
+        Zombie.disposeZombies();
+        WorldMapFactory.rayHandler.dispose();
+        world.dispose();
+    }
+
+    @Override
+    public void hitted(Hitable hitable) {
+        if(hitable instanceof Zombie && hitable.getLife() <= 0){
+            deleteZ.add((Zombie) hitable);
+        }
+
+    }
 }

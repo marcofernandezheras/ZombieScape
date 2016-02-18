@@ -16,6 +16,8 @@ import java.util.stream.Collectors;
 public class WorldMapFactory {
 
     public static RayHandler rayHandler;
+    public static World world;
+    public static MapStage mapStage;
 
     public static Body getGroundBody() {
         return groundBody;
@@ -24,6 +26,7 @@ public class WorldMapFactory {
     private static Body groundBody;
 
     public static World getWorldFor(MapStage stage){
+        mapStage = stage;
 
         BodyDef bDef = new BodyDef();
         bDef.type = BodyDef.BodyType.StaticBody;
@@ -33,7 +36,7 @@ public class WorldMapFactory {
 
         FixtureDef fDef = new FixtureDef();
 
-        World world = new World(new Vector2(), true);
+        world = new World(new Vector2(), true);
 
         List<MapStage.Wall> walls = stage.getWalls();
         List<MapStage.Wall> used = new ArrayList<>();
@@ -139,6 +142,7 @@ public class WorldMapFactory {
         rayHandler.setAmbientLight(0f, 0f, 0f, 0.05f);
         rayHandler.setBlurNum(3);
         rayHandler.setShadows(true);
+
 
         return world;
     }

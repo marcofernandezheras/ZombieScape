@@ -12,5 +12,5 @@ public class StageBuilderConfig {
 
     int windingPercent = 10;
 
-    int numRoomTries = 15;
+    int numRoomTries = 20;
 }
