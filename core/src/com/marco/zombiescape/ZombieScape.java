@@ -97,7 +97,7 @@ public class ZombieScape extends ApplicationAdapter implements Hitable.HitableLi
 
 
         player.act(mx, my);
-        //zombies.forEach(z -> z.act());
+        zombies.forEach(z -> z.act());
 
         world.step(Gdx.graphics.getDeltaTime(), 6, 2);
 

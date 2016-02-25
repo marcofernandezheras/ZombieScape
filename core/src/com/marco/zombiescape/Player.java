@@ -109,16 +109,6 @@ public class Player {
                 Object userData = fixtureA.getUserData();
                 Object userData1 = fixtureB.getUserData();
                 if(userData == Player.this || userData1 == Player.this){
-                    if(userData instanceof Zombie || userData1 instanceof Zombie){
-                        if(userData instanceof Player) {
-                            Zombie z = (Zombie)userData1;
-                            z.setAggro((Player) userData);
-                        }
-                        if(userData1 instanceof Player) {
-                            Zombie z = (Zombie)userData;
-                            z.setAggro((Player) userData1);
-                        }
-                    }
                     return !(userData instanceof Bullet) && !(userData1 instanceof Bullet);
                 }
                 if(userData instanceof Zombie || userData1 instanceof Zombie){
@@ -180,11 +170,36 @@ public class Player {
                         }
                     }
                 }
+                if(userData instanceof Zombie || userData1 instanceof Zombie){
+                    if(userData instanceof Player || userData1 instanceof Player) {
+                        if (userData instanceof Player) {
+                            Zombie z = (Zombie) userData1;
+                            z.setAggro((Player) userData);
+                        }
+                        if (userData1 instanceof Player) {
+                            Zombie z = (Zombie) userData;
+                            z.setAggro((Player) userData1);
+                        }
+                    }
+                }
             }
 
             @Override
             public void endContact(Contact contact) {
-
+                Object userData = contact.getFixtureA().getUserData();
+                Object userData1 = contact.getFixtureB().getUserData();
+                if(userData instanceof Zombie || userData1 instanceof Zombie){
+                    if(userData instanceof Player || userData1 instanceof Player) {
+                        if (userData instanceof Player) {
+                            Zombie z = (Zombie) userData1;
+                            z.setCalm();
+                        }
+                        if (userData1 instanceof Player) {
+                            Zombie z = (Zombie) userData;
+                            z.setCalm();
+                        }
+                    }
+                }
             }
 
             @Override

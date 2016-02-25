@@ -33,6 +33,10 @@ public class Zombie implements Hitable, Deleteable, Disposable {
         }
     }
 
+    public void setCalm() {
+        aggro = false;
+    }
+
     private static final class Direction {
         static final int UP = 0, RIGTH = 1, DOWN = 2, LEFT = 3;
         static final Sprite[] up =    {
