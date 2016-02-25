@@ -11,7 +11,6 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.physics.box2d.joints.FrictionJointDef;
-import com.badlogic.gdx.utils.Disposable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,97 +20,39 @@ import static java.lang.Math.*;
 /**
  * Created by marco on 10/02/16.
  */
-public class Player implements Hitable{
-
-    private World world;
-
-    @Override
-    public void beginHit() {
-        inHit = true;
-    }
-
-    @Override
-    public void endHit() {
-        inHit = false;
-    }
-
-    @Override
-    public int getLife() {
-        return life;
-    }
-
-    @Override
-    public void addHitListener(HitableListener hitableListener) {
-        hitableListeners.add(hitableListener);
-    }
-
-    private List<HitableListener> hitableListeners = new ArrayList<>();
-    private boolean inHit = false;
-    private int life = 50;
+public class Player implements Hittable {
 
     private static final class Direction {
-        static final int UP = 0, RIGTH = 1, DOWN = 2, LEFT = 3;
-        static final Sprite[] up =    {
-                new Sprite(new Texture("player/up_0.png")),
-                new Sprite(new Texture("player/up_1.png")),
-                new Sprite(new Texture("player/up_2.png")),
-                new Sprite(new Texture("player/up_3.png")),
-                new Sprite(new Texture("player/up_4.png")),
-                new Sprite(new Texture("player/up_5.png")),
-                new Sprite(new Texture("player/up_6.png"))
-        };
-        static final Sprite[] down =  {
-                new Sprite(new Texture("player/down_0.png")),
-                new Sprite(new Texture("player/down_1.png")),
-                new Sprite(new Texture("player/down_2.png")),
-                new Sprite(new Texture("player/down_3.png")),
-                new Sprite(new Texture("player/down_4.png")),
-                new Sprite(new Texture("player/down_5.png")),
-                new Sprite(new Texture("player/down_6.png")),
-        };
-        static final Sprite[] left =  {
-                new Sprite(new Texture("player/left_0.png")),
-                new Sprite(new Texture("player/left_1.png")),
-                new Sprite(new Texture("player/left_2.png")),
-                new Sprite(new Texture("player/left_3.png")),
-                new Sprite(new Texture("player/left_4.png")),
-                new Sprite(new Texture("player/left_5.png")),
-                new Sprite(new Texture("player/left_6.png")),
+        static final int UP = 0;
+        static final int RIGHT = 1;
+        static final int DOWN = 2;
+        static final int LEFT = 3;
+        static final Sprite[][] sprites = new Sprite[4][7];
 
-        };
-        static final Sprite[] right = {
-                new Sprite(new Texture("player/right_0.png")),
-                new Sprite(new Texture("player/right_1.png")),
-                new Sprite(new Texture("player/right_2.png")),
-                new Sprite(new Texture("player/right_3.png")),
-                new Sprite(new Texture("player/right_4.png")),
-                new Sprite(new Texture("player/right_5.png")),
-                new Sprite(new Texture("player/right_6.png")),
-        };
-    }
+        private Direction(){}
 
-    public static void dispose(){
-        for (Sprite sprite : Direction.up) {
-            sprite.getTexture().dispose();
-        }
-        for (Sprite sprite : Direction.down) {
-            sprite.getTexture().dispose();
-        }
-        for (Sprite sprite : Direction.left) {
-            sprite.getTexture().dispose();
-        }
-        for (Sprite sprite : Direction.right) {
-            sprite.getTexture().dispose();
+        static {
+            String[] aux = {"player/up_%d.png", "player/right_%d.png", "player/down_%d.png", "player/left_%d.png"};
+            for (int i = 0; i < sprites.length; i++) {
+                for (int j = 0; j < sprites[i].length; j++) {
+                    sprites[i][j] = new Sprite(new Texture(String.format(aux[i],j)));
+                    sprites[i][j].getTexture().setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+                }
+            }
         }
     }
 
+    private World world;
+    private List<HittableListener> hittableListeners = new ArrayList<>();
+    private boolean inHit = false;
+    private int life = 50;
     private int currentDirection = Direction.DOWN;
     private final Body body;
-    private Body ligthBody;
+    private Body lightBody;
     private Vector2 velocity = new Vector2();
-    private ConeLight ligth;
     private float delta;
     private int frame = 0;
+    public float shootDelay = 0;
 
     public Player(World world, float x, float y) {
         this.world = world;
@@ -120,20 +61,19 @@ public class Player implements Hitable{
         pointLight.attachToBody(body);
         pointLight.setSoft(false);
 
-        ligth = new ConeLight(WorldMapFactory.rayHandler,15, Color.WHITE, 8.5f, body.getWorldCenter().x, body.getWorldCenter().y, (float) toRadians(90), 25f);
-        ligth.attachToBody(ligthBody);
-        ligth.setSoftnessLength(.5f);
+        ConeLight light = new ConeLight(WorldMapFactory.rayHandler, 15, Color.WHITE, 8.5f, body.getWorldCenter().x, body.getWorldCenter().y, (float) toRadians(90), 25f);
+        light.attachToBody(lightBody);
+        light.setSoftnessLength(.5f);
         createFriction(world);
     }
 
     private Body createBody(World world, float x, float y) {
-        Body body;
+        Body bodyAux;
         BodyDef def = new BodyDef();
         def.type = BodyDef.BodyType.DynamicBody;
         def.position.set( x, y);
 
-
-        body = world.createBody(def);
+        bodyAux = world.createBody(def);
 
         PolygonShape shape = new PolygonShape();
         shape.setAsBox(0.15f, 0.15f);
@@ -141,11 +81,10 @@ public class Player implements Hitable{
         FixtureDef fdef = new FixtureDef();
         fdef.shape = shape;
 
-        Fixture fixture = body.createFixture(fdef);
+        Fixture fixture = bodyAux.createFixture(fdef);
         fixture.setUserData(this);
 
-        ligthBody = world.createBody(def);
-
+        lightBody = world.createBody(def);
 
         FixtureDef aggroSensorDef = new FixtureDef();
 
@@ -154,14 +93,13 @@ public class Player implements Hitable{
 
         aggroSensorDef.shape = aggroShape;
         aggroSensorDef.isSensor = true;
-        Fixture aggroFix = body.createFixture(aggroSensorDef);
+        Fixture aggroFix = bodyAux.createFixture(aggroSensorDef);
 
         aggroFix.setUserData(this);
 
-
         shape.dispose();
         aggroShape.dispose();
-        return body;
+        return bodyAux;
     }
 
     private void createFriction(World world) {
@@ -184,20 +122,9 @@ public class Player implements Hitable{
         Sprite currentSprite;
         if (body.getLinearVelocity().len() <= 0)
             frame = 0;
-        switch (currentDirection){
-            case Direction.UP:
-                currentSprite = Direction.up[frame];
-                break;
-            case Direction.LEFT:
-                currentSprite = Direction.left[frame];
-                break;
-            case Direction.RIGTH:
-                currentSprite = Direction.right[frame];
-                break;
-            default:
-                currentSprite = Direction.down[frame];
-        }
-        currentSprite.getTexture().setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+
+        currentSprite = Direction.sprites[currentDirection][frame];
+
         Vector2 worldCenter = body.getWorldCenter();
         currentSprite.setPosition((worldCenter.x * Constants.METER2PIXEL) - currentSprite.getWidth()/2,
                 worldCenter.y * Constants.METER2PIXEL - currentSprite.getHeight()/4);
@@ -212,7 +139,7 @@ public class Player implements Hitable{
         return body.getWorldCenter().y;
     }
 
-    public float x = 0;
+
     public void act(float mx, float my){
         delta += Gdx.graphics.getDeltaTime();
 
@@ -229,7 +156,7 @@ public class Player implements Hitable{
 
             if(stillInHit[0]) {
                 life -= 10;
-                hitableListeners.forEach(l -> l.hitted(Player.this));
+                hittableListeners.forEach(l -> l.hitted(Player.this));
                 System.out.println("Player: " + life);
             }
         }
@@ -238,8 +165,44 @@ public class Player implements Hitable{
             frame = (frame + 1)%7;
             delta = 0;
         }
-        velocity.set(0,0);
 
+        handleInput();
+
+        float angle = Util.angle(mx, my, center.x, center.y);
+
+        lightBody.setTransform(center.x, center.y,  angle);
+
+        updateDirection(angle);
+
+        shootDelay += delta;
+
+        if(Gdx.input.isButtonPressed(0) && shootDelay > .05){
+            shootDelay = 0;
+            shooTo(angle);
+        }
+
+
+    }
+
+    private void updateDirection(double angle) {
+        if(angle <= 2.35 && angle >= 0.78){
+            currentDirection = Direction.UP;
+        }
+        else if(angle < 0.78 && angle >= -0.90)
+        {
+            currentDirection = Direction.RIGHT;
+        }
+        else if(angle < -0.90 && angle >= -2.43){
+            currentDirection = Direction.DOWN;
+        }
+        else{
+            currentDirection = Direction.LEFT;
+        }
+    }
+
+    private void handleInput() {
+        Vector2 center = body.getWorldCenter();
+        velocity.set(0,0);
         if(Gdx.input.isKeyPressed(Input.Keys.A)){
             velocity.set(-0.07f, 0);
         }
@@ -252,39 +215,40 @@ public class Player implements Hitable{
         if(Gdx.input.isKeyPressed(Input.Keys.S)){
             velocity.set(0, -0.07f);
         }
-        float deltaX = mx - center.x;
-        float deltaY = my - center.y;
-        double angle = atan2(deltaY, deltaX);
-
-        ligthBody.setTransform(center.x, center.y, (float) angle);
-
-        if(angle <= 2.35 && angle >= 0.78){
-            currentDirection = Direction.UP;
-        }
-        else if(angle < 0.78 && angle >= -0.90)
-        {
-            currentDirection = Direction.RIGTH;
-        }
-        else if(angle < -0.90 && angle >= -2.43){
-            currentDirection = Direction.DOWN;
-        }
-        else{
-            currentDirection = Direction.LEFT;
-        }
-
-        x += Gdx.graphics.getDeltaTime();
-
-        if(Gdx.input.isButtonPressed(0) && x > .05){
-            x = 0;
-            shooTo(deltaX, deltaY);
-        }
-
         body.applyLinearImpulse(velocity, center, true);
-        Vector2 v = body.getLinearVelocity();
     }
 
-    private void shooTo(float x, float y) {
+    private void shooTo(float angle) {
         Vector2 worldCenter = body.getWorldCenter();
-        Bullet.newBullet(worldCenter.x, worldCenter.y, x, y);
+        Bullet.newBullet(worldCenter.x, worldCenter.y, angle);
+    }
+
+    public static void dispose(){
+        for (int i = 0; i < Direction.sprites.length; i++) {
+            for (int j = 0; j < Direction.sprites[i].length; j++) {
+                Direction.sprites[i][j].getTexture().dispose();
+            }
+        }
+    }
+
+    //HITTABLE
+    @Override
+    public void beginHit() {
+        inHit = true;
+    }
+
+    @Override
+    public void endHit() {
+        inHit = false;
+    }
+
+    @Override
+    public int getLife() {
+        return life;
+    }
+
+    @Override
+    public void addHitListener(HittableListener hittableListener) {
+        hittableListeners.add(hittableListener);
     }
 }

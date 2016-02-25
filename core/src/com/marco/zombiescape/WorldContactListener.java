@@ -9,7 +9,7 @@ import com.badlogic.gdx.physics.box2d.Manifold;
 /**
  * Created by marco on 25/02/16.
  */
-public class WolrdContactListener implements ContactListener {
+public class WorldContactListener implements ContactListener {
 
     private void handleContactZombieBullet(Zombie zombie, Bullet bullet){
         bullet.markToDelete();
@@ -35,26 +35,21 @@ public class WolrdContactListener implements ContactListener {
     public void beginContact(Contact contact) {
         Object userData = contact.getFixtureA().getUserData();
         Object userData1 = contact.getFixtureB().getUserData();
+
         if(userData instanceof Bullet || userData1 instanceof Bullet){
-            if(userData == null || userData1 == null){//Wall
-                Bullet bullet = userData != null ? (Bullet) userData : (Bullet) userData1;
-                bullet.markToDelete();
-            }
-            else if(userData instanceof Zombie || userData1 instanceof Zombie){
-                if(userData instanceof Bullet || userData1 instanceof Bullet) {
-                    Zombie z = userData instanceof Zombie ? (Zombie)userData : (Zombie)userData1;
-                    Bullet b = userData instanceof Bullet ? (Bullet)userData : (Bullet)userData1;
-                    handleContactZombieBullet(z,b);
-                }
-            }
-        }
-        if(userData instanceof Zombie || userData1 instanceof Zombie){
-            if(userData instanceof Player || userData1 instanceof Player) {
+            Bullet b = userData instanceof Bullet ? (Bullet)userData : (Bullet)userData1;
+            if(userData instanceof Zombie || userData1 instanceof Zombie){
                 Zombie z = userData instanceof Zombie ? (Zombie)userData : (Zombie)userData1;
-                Player p = userData instanceof Player ? (Player)userData : (Player)userData1;
-                boolean isSensor = userData instanceof Player ? contact.getFixtureA().isSensor() : contact.getFixtureB().isSensor();
-                handleBeginContactZombiePlayer(z,p, isSensor);
+                handleContactZombieBullet(z,b);
             }
+            b.markToDelete();
+        }
+        else if((userData instanceof Zombie || userData1 instanceof Zombie)
+                && (userData instanceof Player || userData1 instanceof Player)) {
+            Zombie z = userData instanceof Zombie ? (Zombie)userData : (Zombie)userData1;
+            Player p = userData instanceof Player ? (Player)userData : (Player)userData1;
+            boolean isSensor = userData instanceof Player ? contact.getFixtureA().isSensor() : contact.getFixtureB().isSensor();
+            handleBeginContactZombiePlayer(z,p, isSensor);
         }
     }
 

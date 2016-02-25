@@ -6,6 +6,9 @@ package com.marco.zombiescape;
 public class Constants {
     private Constants(){}
 
+    public static boolean DEBUG = true;
+    public static boolean LIGTHS = true;
+
     public static final float METER2PIXEL = 128.0f;
     public static final float PIXEL2METER = 0.0078125f;
 

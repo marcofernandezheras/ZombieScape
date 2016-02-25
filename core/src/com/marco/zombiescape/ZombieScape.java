@@ -20,8 +20,6 @@ import mapgenerator.DungeonBuilder;
 import mapgenerator.MapStage;
 import mapgenerator.StageBuilderConfig;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class ZombieScape extends ApplicationAdapter{
@@ -31,10 +29,8 @@ public class ZombieScape extends ApplicationAdapter{
 	Box2DDebugRenderer debugRenderer;
 	World world;
     Player player;
-	int x = -128 , y = -128;
-    boolean debug = true, ligths = true;
+
     private ParticleEffect pe;
-    private List<Zombie> zombies = new ArrayList<>();
 
     @Override
 	public void create () {
@@ -71,8 +67,7 @@ public class ZombieScape extends ApplicationAdapter{
             int maxZombies = (int) Math.ceil(r.getWidth() * r.getHeight() / 4.0);
             if(r != randomRoom) {
                 for (int i = 0; i < maxZombies; i++) {
-                    Zombie zombie = new Zombie(world, (float)rdn.nextDouble(r.getX()+0.5f, r.getX() - 0.5f + r.getWidth()), (float)rdn.nextDouble(r.getY() + 0.5f, r.getY() - 0.5f + r.getHeight()));
-                    zombies.add(zombie);
+                    Zombie.newZombie(world, (float)rdn.nextDouble(r.getX()+0.5f, r.getX() - 0.5f + r.getWidth()), (float)rdn.nextDouble(r.getY() + 0.5f, r.getY() - 0.5f + r.getHeight()));
                 }
             }
         });
@@ -98,8 +93,8 @@ public class ZombieScape extends ApplicationAdapter{
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         camera.setToOrtho(false);
 
-        if (Gdx.input.isKeyJustPressed(Input.Keys.P)) debug = !debug;
-        if (Gdx.input.isKeyJustPressed(Input.Keys.L)) ligths = !ligths;
+        if (Gdx.input.isKeyJustPressed(Input.Keys.P)) Constants.DEBUG = !Constants.DEBUG;
+        if (Gdx.input.isKeyJustPressed(Input.Keys.L)) Constants.LIGTHS = !Constants.LIGTHS;
 
         camera.zoom = 2f;
         camera.translate((player.getX() * Constants.METER2PIXEL) - camera.viewportWidth ,
@@ -113,7 +108,13 @@ public class ZombieScape extends ApplicationAdapter{
 
 
         player.act(mx, my);
-        zombies.forEach(z -> z.act());
+        Zombie.zombiePool.forEach(Zombie::act);
+
+        Zombie.zombiePool.stream().filter(Zombie::isMarketToDelete).forEach(Zombie::dispose);
+        Zombie.zombiePool.removeIf(Zombie::isMarketToDelete);
+
+        Bullet.bulletPool.stream().filter(Bullet::isMarketToDelete).forEach(Bullet::dispose);
+        Bullet.bulletPool.removeIf(Bullet::isMarketToDelete);
 
         world.step(Gdx.graphics.getDeltaTime(), 6, 2);
         /*pe.update(Gdx.graphics.getDeltaTime());
@@ -130,25 +131,21 @@ public class ZombieScape extends ApplicationAdapter{
                        (int)camera.viewportWidth*2, (int)camera.viewportHeight*2);
         player.draw(batch);
         //pe.draw(batch);
-        zombies.forEach(z -> z.draw(batch));
+        Zombie.zombiePool.forEach(zombie -> zombie.draw(batch));
         Bullet.bulletPool.forEach(b -> b.draw(batch));
         batch.end();
 
         Matrix4 combined = new Matrix4(camera.combined);
         combined.scale(Constants.METER2PIXEL, Constants.METER2PIXEL, 1);
 
-        if (ligths){
+        if (Constants.LIGTHS){
             WorldMapFactory.rayHandler.setCombinedMatrix(combined);
             WorldMapFactory.rayHandler.updateAndRender();
         }
 
-        zombies.stream().filter(Zombie::isMarketToDelete).forEach(Zombie::dispose);
-        zombies.removeIf(Zombie::isMarketToDelete);
 
-        Bullet.bulletPool.stream().filter(Bullet::isMarketToDelete).forEach(Bullet::dispose);
-        Bullet.bulletPool.removeIf(Bullet::isMarketToDelete);
 
-        if(debug) debugRenderer.render(world, combined);
+        if(Constants.DEBUG) debugRenderer.render(world, combined);
 	}
 
     @Override

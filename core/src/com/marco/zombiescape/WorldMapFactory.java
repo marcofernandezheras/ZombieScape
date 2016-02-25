@@ -145,7 +145,7 @@ public class WorldMapFactory {
 
 
         world.setContactFilter(new WorldContactFilter());
-        world.setContactListener(new WolrdContactListener());
+        world.setContactListener(new WorldContactListener());
 
         return world;
     }

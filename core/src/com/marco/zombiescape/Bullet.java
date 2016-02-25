@@ -14,28 +14,22 @@ import java.util.List;
 /**
  * Created by marco on 12/02/16.
  */
-public class Bullet implements Deleteable, Disposable {
+public class Bullet implements Deletable, Disposable {
     private final Body bullet;
     private static final Texture BULLET_TEX = new Texture("bullet.png");
     private final Sprite sprite;
     private boolean deleteMe = false;
 
-    public static List<Bullet> bulletPool = new ArrayList<>();
+    protected static final List<Bullet> bulletPool = new ArrayList<>();
 
-    public static Bullet newBullet(float fromX, float fromY, float toX, float toY){
-        Bullet bullet = new Bullet(fromX, fromY, toX, toY);
-        bulletPool.add(bullet);
-        return bullet;
-    }
-
-    private Bullet(float fromX, float fromY, float toX, float toY) {
+    private Bullet(float fromX, float fromY, float angle) {
         sprite = new Sprite(BULLET_TEX);
 
         BodyDef def = new BodyDef();
         def.type = BodyDef.BodyType.DynamicBody;
         def.bullet = true;
         def.position.set(fromX, fromY);
-        def.linearVelocity.set(toX, toY).nor().scl(30);
+        def.linearVelocity.set((float) (1 * Math.cos(angle)), (float) (1 * Math.sin(angle))).nor().scl(30);
         bullet = WorldMapFactory.world.createBody(def);
 
         PolygonShape shape = new PolygonShape();
@@ -61,6 +55,12 @@ public class Bullet implements Deleteable, Disposable {
         WorldMapFactory.world.createJoint(frictionJointDef);
     }
 
+    public static Bullet newBullet(float fromX, float fromY, float angle){
+        Bullet bullet = new Bullet(fromX, fromY, angle);
+        bulletPool.add(bullet);
+        return bullet;
+    }
+
     public void draw(SpriteBatch batch){
         Vector2 center = bullet.getWorldCenter();
         sprite.setPosition(center.x * Constants.METER2PIXEL, center.y * Constants.METER2PIXEL);
@@ -68,13 +68,12 @@ public class Bullet implements Deleteable, Disposable {
         sprite.draw(batch);
     }
 
+    @Override
     public void dispose(){
         try {
             bullet.getFixtureList().get(0).setUserData(null);
             WorldMapFactory.world.destroyBody(bullet);
-        } catch(Exception e){
-
-        }
+        } catch(Exception e){/*expected*/}
     }
 
     @Override
