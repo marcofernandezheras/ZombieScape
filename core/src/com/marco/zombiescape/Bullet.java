@@ -8,6 +8,9 @@ import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.physics.box2d.joints.FrictionJointDef;
 import com.badlogic.gdx.utils.Disposable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by marco on 12/02/16.
  */
@@ -15,8 +18,17 @@ public class Bullet implements Deleteable, Disposable {
     private final Body bullet;
     private static final Texture BULLET_TEX = new Texture("bullet.png");
     private final Sprite sprite;
+    private boolean deleteMe = false;
 
-    public Bullet(float fromX, float fromY, float toX, float toY) {
+    public static List<Bullet> bulletPool = new ArrayList<>();
+
+    public static Bullet newBullet(float fromX, float fromY, float toX, float toY){
+        Bullet bullet = new Bullet(fromX, fromY, toX, toY);
+        bulletPool.add(bullet);
+        return bullet;
+    }
+
+    private Bullet(float fromX, float fromY, float toX, float toY) {
         sprite = new Sprite(BULLET_TEX);
 
         BodyDef def = new BodyDef();
@@ -63,5 +75,15 @@ public class Bullet implements Deleteable, Disposable {
         } catch(Exception e){
 
         }
+    }
+
+    @Override
+    public void markToDelete() {
+        deleteMe = true;
+    }
+
+    @Override
+    public boolean isMarketToDelete() {
+        return deleteMe;
     }
 }

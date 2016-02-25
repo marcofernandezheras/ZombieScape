@@ -21,9 +21,33 @@ import static java.lang.Math.*;
 /**
  * Created by marco on 10/02/16.
  */
-public class Player {
+public class Player implements Hitable{
 
     private World world;
+
+    @Override
+    public void beginHit() {
+        inHit = true;
+    }
+
+    @Override
+    public void endHit() {
+        inHit = false;
+    }
+
+    @Override
+    public int getLife() {
+        return life;
+    }
+
+    @Override
+    public void addHitListener(HitableListener hitableListener) {
+        hitableListeners.add(hitableListener);
+    }
+
+    private List<HitableListener> hitableListeners = new ArrayList<>();
+    private boolean inHit = false;
+    private int life = 50;
 
     private static final class Direction {
         static final int UP = 0, RIGTH = 1, DOWN = 2, LEFT = 3;
@@ -88,8 +112,6 @@ public class Player {
     private ConeLight ligth;
     private float delta;
     private int frame = 0;
-    private List<Deleteable> toDelete = new ArrayList<>();
-    private List<Bullet> bullets = new ArrayList<>();
 
     public Player(World world, float x, float y) {
         this.world = world;
@@ -98,128 +120,10 @@ public class Player {
         pointLight.attachToBody(body);
         pointLight.setSoft(false);
 
-        ligth = new ConeLight(WorldMapFactory.rayHandler,15, Color.WHITE, 15.5f, body.getWorldCenter().x, body.getWorldCenter().y, (float) toRadians(90), 25f);
+        ligth = new ConeLight(WorldMapFactory.rayHandler,15, Color.WHITE, 8.5f, body.getWorldCenter().x, body.getWorldCenter().y, (float) toRadians(90), 25f);
         ligth.attachToBody(ligthBody);
         ligth.setSoftnessLength(.5f);
         createFriction(world);
-
-        world.setContactFilter(new ContactFilter() {
-            @Override
-            public boolean shouldCollide(Fixture fixtureA, Fixture fixtureB) {
-                Object userData = fixtureA.getUserData();
-                Object userData1 = fixtureB.getUserData();
-                if(userData == Player.this || userData1 == Player.this){
-                    return !(userData instanceof Bullet) && !(userData1 instanceof Bullet);
-                }
-                if(userData instanceof Zombie || userData1 instanceof Zombie){
-                    if(userData == null || userData1 == null) {
-                        if(userData == null) {
-                            Zombie z = (Zombie)userData1;
-                            z.changeDirection();
-                        }
-                        if(userData1 == null) {
-                            Zombie z = (Zombie)userData;
-                            z.changeDirection();
-                        }
-                        return false;
-                    }
-                }
-                if(userData instanceof Bullet && userData1 instanceof Bullet) return false;
-                return userData != userData1;
-            }
-        });
-
-        world.setContactListener(new ContactListener() {
-            @Override
-            public void beginContact(Contact contact) {
-                Object userData = contact.getFixtureA().getUserData();
-                Object userData1 = contact.getFixtureB().getUserData();
-                if(userData instanceof Bullet || userData1 instanceof Bullet){
-                    if(userData == null || userData1 == null){//Wall
-                        if(userData instanceof Bullet) {
-                            Bullet b = (Bullet) userData;
-                            if(!toDelete.contains(b))
-                                toDelete.add(b);
-                        }
-                        if(userData1 instanceof Bullet) {
-                            Bullet b = (Bullet) userData1;
-                            if(!toDelete.contains(b))
-                                toDelete.add(b);
-                        }
-                    }
-                    else if(userData instanceof Zombie || userData1 instanceof Zombie){
-                        if(userData instanceof Bullet) {
-                            Bullet b = (Bullet) userData;
-                            if(!toDelete.contains(b))
-                                toDelete.add(b);
-                            Hitable hitable = (Hitable)userData1;
-                            hitable.hit();
-                            if(hitable.getLife() <= 0){
-                                toDelete.add((Deleteable) userData1);
-                            }
-                        }
-                        if(userData1 instanceof Bullet) {
-                            Bullet b = (Bullet) userData1;
-                            if(!toDelete.contains(b))
-                                toDelete.add(b);
-                            Hitable hitable = (Hitable)userData;
-                            hitable.hit();
-                            if(hitable.getLife() <= 0){
-                                toDelete.add((Deleteable) userData1);
-                            }
-                        }
-                    }
-                }
-                if(userData instanceof Zombie || userData1 instanceof Zombie){
-                    if(userData instanceof Player || userData1 instanceof Player) {
-                        if (userData instanceof Player) {
-                            Zombie z = (Zombie) userData1;
-                            z.setAggro((Player) userData);
-                        }
-                        if (userData1 instanceof Player) {
-                            Zombie z = (Zombie) userData;
-                            z.setAggro((Player) userData1);
-                        }
-                    }
-                }
-            }
-
-            @Override
-            public void endContact(Contact contact) {
-                Object userData = contact.getFixtureA().getUserData();
-                Object userData1 = contact.getFixtureB().getUserData();
-                if(userData instanceof Zombie || userData1 instanceof Zombie){
-                    if(userData instanceof Player || userData1 instanceof Player) {
-                        if (userData instanceof Player) {
-                            Zombie z = (Zombie) userData1;
-                            z.setCalm();
-                        }
-                        if (userData1 instanceof Player) {
-                            Zombie z = (Zombie) userData;
-                            z.setCalm();
-                        }
-                    }
-                }
-            }
-
-            @Override
-            public void preSolve(Contact contact, Manifold oldManifold) {
-                Object userData = contact.getFixtureA().getUserData();
-                Object userData1 = contact.getFixtureB().getUserData();
-                if(userData instanceof Bullet || userData1 instanceof Bullet){
-                    if(userData instanceof Zombie || userData1 instanceof Zombie){
-                        contact.getFixtureA().getBody().setLinearVelocity(0,0);
-                        contact.getFixtureB().getBody().setLinearVelocity(0,0);
-                        contact.setEnabled(false);
-                    }
-                }
-            }
-
-            @Override
-            public void postSolve(Contact contact, ContactImpulse impulse) {
-
-            }
-        });
     }
 
     private Body createBody(World world, float x, float y) {
@@ -277,16 +181,6 @@ public class Player {
     }
 
     public void draw(final SpriteBatch batch){
-        for (int i = 0; i < toDelete.size(); i++) {
-
-            if(toDelete.get(i) instanceof Disposable){
-                ((Disposable)toDelete.get(i)).dispose();
-            }
-
-            if(toDelete.get(i) instanceof Bullet)
-                bullets.remove(toDelete.get(i));
-        }
-        toDelete.clear();
         Sprite currentSprite;
         if (body.getLinearVelocity().len() <= 0)
             frame = 0;
@@ -308,7 +202,6 @@ public class Player {
         currentSprite.setPosition((worldCenter.x * Constants.METER2PIXEL) - currentSprite.getWidth()/2,
                 worldCenter.y * Constants.METER2PIXEL - currentSprite.getHeight()/4);
         currentSprite.draw(batch);
-        bullets.forEach(b -> b.draw(batch));
     }
 
     public float getX(){
@@ -322,12 +215,31 @@ public class Player {
     public float x = 0;
     public void act(float mx, float my){
         delta += Gdx.graphics.getDeltaTime();
+
+        Vector2 center = body.getWorldCenter();
+        if(inHit){
+            final boolean[] stillInHit = {false};
+            world.QueryAABB(f-> {
+                if(f.getUserData() instanceof Zombie){
+                    stillInHit[0] = true;
+                    return false;
+                }
+                return true;
+            }, center.x - 0.18f, center.y - 0.18f, center.x + 0.18f, center.y + 0.18f);
+
+            if(stillInHit[0]) {
+                life -= 10;
+                hitableListeners.forEach(l -> l.hitted(Player.this));
+                System.out.println("Player: " + life);
+            }
+        }
+
         if(delta> .05){
             frame = (frame + 1)%7;
             delta = 0;
         }
         velocity.set(0,0);
-        Vector2 center = body.getWorldCenter();
+
         if(Gdx.input.isKeyPressed(Input.Keys.A)){
             velocity.set(-0.07f, 0);
         }
@@ -373,6 +285,6 @@ public class Player {
 
     private void shooTo(float x, float y) {
         Vector2 worldCenter = body.getWorldCenter();
-        bullets.add(new Bullet(worldCenter.x, worldCenter.y, x, y));
+        Bullet.newBullet(worldCenter.x, worldCenter.y, x, y);
     }
 }

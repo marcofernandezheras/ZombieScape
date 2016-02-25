@@ -144,6 +144,9 @@ public class WorldMapFactory {
         rayHandler.setShadows(true);
 
 
+        world.setContactFilter(new WorldContactFilter());
+        world.setContactListener(new WolrdContactListener());
+
         return world;
     }
 }

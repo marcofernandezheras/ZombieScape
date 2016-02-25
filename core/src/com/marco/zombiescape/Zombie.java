@@ -37,6 +37,16 @@ public class Zombie implements Hitable, Deleteable, Disposable {
         aggro = false;
     }
 
+    @Override
+    public void markToDelete() {
+        deleteMe = true;
+    }
+
+    @Override
+    public boolean isMarketToDelete() {
+        return deleteMe;
+    }
+
     private static final class Direction {
         static final int UP = 0, RIGTH = 1, DOWN = 2, LEFT = 3;
         static final Sprite[] up =    {
@@ -86,6 +96,7 @@ public class Zombie implements Hitable, Deleteable, Disposable {
     private Player player;
     private int life;
     private ArrayList<HitableListener> hitableListeners;
+    private boolean deleteMe = false;
 
     public Zombie(World world, float x, float y) {
         if(finder == null){
@@ -143,14 +154,10 @@ public class Zombie implements Hitable, Deleteable, Disposable {
                 body.setLinearVelocity(0,0);
             }
         }
-        else if(delta > rand){
-            delta = 0;
-            ThreadLocalRandom random = ThreadLocalRandom.current();
-            float nextX = random.nextFloat() * (random.nextBoolean() ? 1f : -1f);
-            float nexty = random.nextFloat() * (random.nextBoolean() ? 1f : -1f);
-            body.setLinearVelocity(nextX,nexty);
-            body.setLinearVelocity(body.getLinearVelocity().nor().scl(0.4f));
+        else{
+            body.setLinearVelocity(0,0);
         }
+
         if(abs(body.getLinearVelocity().y) > 0 ||  abs(body.getLinearVelocity().x) > 0) {
             double angle = atan2(body.getLinearVelocity().y, body.getLinearVelocity().x);
 
@@ -167,10 +174,11 @@ public class Zombie implements Hitable, Deleteable, Disposable {
     }
 
     public void draw(final SpriteBatch batch){
+        Vector2 worldCenter = body.getWorldCenter();
         Sprite currentSprite;
-        if (body.getLinearVelocity().len() == 0)
+        if (Float.compare(body.getLinearVelocity().len(), 0) == 0)
             frame = 0;
-        switch (currentDirection){
+        switch (currentDirection) {
             case Direction.UP:
                 currentSprite = Direction.up[frame];
                 break;
@@ -184,9 +192,9 @@ public class Zombie implements Hitable, Deleteable, Disposable {
                 currentSprite = Direction.down[frame];
         }
         currentSprite.getTexture().setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
-        Vector2 worldCenter = body.getWorldCenter();
-        currentSprite.setPosition((worldCenter.x * Constants.METER2PIXEL) - currentSprite.getWidth()/2,
-                worldCenter.y * Constants.METER2PIXEL - currentSprite.getHeight()/2);
+
+        currentSprite.setPosition((worldCenter.x * Constants.METER2PIXEL) - currentSprite.getWidth() / 2,
+                worldCenter.y * Constants.METER2PIXEL - currentSprite.getHeight() / 2);
         currentSprite.draw(batch);
     }
 
@@ -195,10 +203,14 @@ public class Zombie implements Hitable, Deleteable, Disposable {
     }
 
     @Override
-    public void hit() {
+    public void beginHit() {
         life--;
         System.out.println(life);
         hitableListeners.forEach(l -> l.hitted(Zombie.this));
+    }
+
+    @Override
+    public void endHit() {
     }
 
     @Override

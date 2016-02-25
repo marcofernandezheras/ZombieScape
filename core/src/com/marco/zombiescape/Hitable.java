@@ -9,7 +9,8 @@ public interface Hitable {
         void hitted(Hitable hitable);
     }
 
-    void hit();
+    void beginHit();
+    void endHit();
     int getLife();
     void addHitListener(HitableListener hitableListener);
 }

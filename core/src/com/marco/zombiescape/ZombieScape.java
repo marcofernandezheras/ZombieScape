@@ -8,12 +8,14 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.ParticleEffect;
+import com.badlogic.gdx.graphics.g2d.ParticleEmitter;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Matrix4;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.*;
+import com.badlogic.gdx.utils.Array;
 import mapgenerator.DungeonBuilder;
 import mapgenerator.MapStage;
 import mapgenerator.StageBuilderConfig;
@@ -22,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class ZombieScape extends ApplicationAdapter implements Hitable.HitableListener{
+public class ZombieScape extends ApplicationAdapter{
 	SpriteBatch batch;
 	Texture img;
 	OrthographicCamera camera;
@@ -33,7 +35,7 @@ public class ZombieScape extends ApplicationAdapter implements Hitable.HitableLi
     boolean debug = true, ligths = true;
     private ParticleEffect pe;
     private List<Zombie> zombies = new ArrayList<>();
-    private List<Zombie> deleteZ = new ArrayList<>();
+
     @Override
 	public void create () {
 		Box2D.init();
@@ -55,10 +57,12 @@ public class ZombieScape extends ApplicationAdapter implements Hitable.HitableLi
 
         player = new Player(world, v2.x , v2.y);
 
+        /*
         pe = new ParticleEffect();
         pe.load(Gdx.files.internal("test.particles"),Gdx.files.internal(""));
-        pe.getEmitters().first().setPosition(player.getX() * Constants.METER2PIXEL,player.getY() * Constants.METER2PIXEL);
+        pe.setPosition(player.getX() * Constants.METER2PIXEL,player.getY() * Constants.METER2PIXEL);
         pe.start();
+        */
 
         new PointLight(WorldMapFactory.rayHandler, 15, null, 5, player.getX(), player.getY());
 
@@ -68,12 +72,24 @@ public class ZombieScape extends ApplicationAdapter implements Hitable.HitableLi
             if(r != randomRoom) {
                 for (int i = 0; i < maxZombies; i++) {
                     Zombie zombie = new Zombie(world, (float)rdn.nextDouble(r.getX()+0.5f, r.getX() - 0.5f + r.getWidth()), (float)rdn.nextDouble(r.getY() + 0.5f, r.getY() - 0.5f + r.getHeight()));
-                    zombie.addHitListener(ZombieScape.this);
                     zombies.add(zombie);
                 }
             }
         });
     }
+
+    public void rotateBy(ParticleEffect particleEffect, float amountInDegrees) {
+        Array<ParticleEmitter> emitters = particleEffect.getEmitters();
+        for (int i = 0; i < emitters.size; i++) {
+            ParticleEmitter.ScaledNumericValue val = emitters.get(i).getAngle();
+            float amplitude = (val.getHighMax() - val.getHighMin()) / 2f;
+            float h1 = amountInDegrees + amplitude;
+            float h2 = amountInDegrees - amplitude;
+            val.setHigh(h1, h2);
+            val.setLow(amountInDegrees);
+        }
+    }
+
 
     Vector2 v = new Vector2();
 	@Override
@@ -100,13 +116,11 @@ public class ZombieScape extends ApplicationAdapter implements Hitable.HitableLi
         zombies.forEach(z -> z.act());
 
         world.step(Gdx.graphics.getDeltaTime(), 6, 2);
-
-
-        pe.update(Gdx.graphics.getDeltaTime());
+        /*pe.update(Gdx.graphics.getDeltaTime());
 
         if (pe.isComplete())
             pe.reset();
-
+        */
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
         batch.draw(img,(int)((player.getX() * Constants.METER2PIXEL) - (camera.viewportWidth)),
@@ -115,8 +129,9 @@ public class ZombieScape extends ApplicationAdapter implements Hitable.HitableLi
                        (int)(img.getHeight() - (player.getY() * Constants.METER2PIXEL + camera.viewportHeight)),
                        (int)camera.viewportWidth*2, (int)camera.viewportHeight*2);
         player.draw(batch);
-        pe.draw(batch);
+        //pe.draw(batch);
         zombies.forEach(z -> z.draw(batch));
+        Bullet.bulletPool.forEach(b -> b.draw(batch));
         batch.end();
 
         Matrix4 combined = new Matrix4(camera.combined);
@@ -127,12 +142,12 @@ public class ZombieScape extends ApplicationAdapter implements Hitable.HitableLi
             WorldMapFactory.rayHandler.updateAndRender();
         }
 
-        deleteZ.forEach(z -> {
-            z.dispose();
-            zombies.remove(z);
-        });
+        zombies.stream().filter(Zombie::isMarketToDelete).forEach(Zombie::dispose);
+        zombies.removeIf(Zombie::isMarketToDelete);
 
-        deleteZ.clear();
+        Bullet.bulletPool.stream().filter(Bullet::isMarketToDelete).forEach(Bullet::dispose);
+        Bullet.bulletPool.removeIf(Bullet::isMarketToDelete);
+
         if(debug) debugRenderer.render(world, combined);
 	}
 
@@ -144,13 +159,5 @@ public class ZombieScape extends ApplicationAdapter implements Hitable.HitableLi
         Zombie.disposeZombies();
         WorldMapFactory.rayHandler.dispose();
         world.dispose();
-    }
-
-    @Override
-    public void hitted(Hitable hitable) {
-        if(hitable instanceof Zombie && hitable.getLife() <= 0){
-            deleteZ.add((Zombie) hitable);
-        }
-
     }
 }
