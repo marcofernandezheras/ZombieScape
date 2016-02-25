@@ -180,8 +180,6 @@ public class Player implements Hittable {
             shootDelay = 0;
             shooTo(angle);
         }
-
-
     }
 
     private void updateDirection(double angle) {
@@ -204,16 +202,16 @@ public class Player implements Hittable {
         Vector2 center = body.getWorldCenter();
         velocity.set(0,0);
         if(Gdx.input.isKeyPressed(Input.Keys.A)){
-            velocity.set(-0.07f, 0);
+            velocity.set(-0.075f, 0);
         }
         if(Gdx.input.isKeyPressed(Input.Keys.D)) {
-            velocity.set(0.07f, 0);
+            velocity.set(0.075f, 0);
         }
         if(Gdx.input.isKeyPressed(Input.Keys.W)) {
-            velocity.set(0, 0.07f);
+            velocity.set(0, 0.075f);
         }
         if(Gdx.input.isKeyPressed(Input.Keys.S)){
-            velocity.set(0, -0.07f);
+            velocity.set(0, -0.075f);
         }
         body.applyLinearImpulse(velocity, center, true);
     }

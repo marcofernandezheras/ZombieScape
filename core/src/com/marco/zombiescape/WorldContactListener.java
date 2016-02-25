@@ -9,6 +9,7 @@ import com.badlogic.gdx.physics.box2d.Manifold;
 /**
  * Created by marco on 25/02/16.
  */
+
 public class WorldContactListener implements ContactListener {
 
     private void handleContactZombieBullet(Zombie zombie, Bullet bullet){

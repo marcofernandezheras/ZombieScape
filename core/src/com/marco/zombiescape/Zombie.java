@@ -42,7 +42,7 @@ public class Zombie implements Hittable, Deletable, Disposable {
         }
     }
 
-    private static AStarPathFinder finder = null;
+    private AStarPathFinder finder = null;
     protected static final List<Zombie> zombiePool = new ArrayList<>();
 
     private int currentDirection = Direction.DOWN;
@@ -57,9 +57,7 @@ public class Zombie implements Hittable, Deletable, Disposable {
     private boolean deleteMe = false;
 
     private Zombie(World world, float x, float y) {
-        if(finder == null){
-            finder = new AStarPathFinder(WorldMapFactory.mapStage, 100, false);
-        }
+        finder = new AStarPathFinder(WorldMapFactory.mapStage, 100, false);
         spriteNumber = ThreadLocalRandom.current().nextInt(0, Direction.sprites.length);
         hittableListeners = new ArrayList<>();
 

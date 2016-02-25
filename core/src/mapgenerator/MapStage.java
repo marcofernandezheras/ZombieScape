@@ -2,6 +2,7 @@ package mapgenerator;
 
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import com.marco.zombiescape.Util;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -85,6 +86,19 @@ public class MapStage {
     public Rectangle getRandomRoom(){
         ThreadLocalRandom random = ThreadLocalRandom.current();
         return rooms.get(random.nextInt(0, rooms.size()));
+    }
+
+    public Rectangle getOpositeRoom(Rectangle room){
+        Rectangle temp = room;
+        float maxDistance = 0.0f;
+        for (Rectangle rectangle : rooms) {
+            float distance = Util.distance(rectangle.x, rectangle.y, room.x, room.y);
+            if(distance > maxDistance){
+                maxDistance = distance;
+                temp = rectangle;
+            }
+        }
+        return temp;
     }
 
     public void addRoom(int x, int y, int width, int height){

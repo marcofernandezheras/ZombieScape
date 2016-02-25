@@ -10,7 +10,11 @@ public class StageBuilderConfig {
     // Increasing this allows rooms to be larger.
     int roomExtraSize = 1;
 
-    int windingPercent = 10;
+    int windingPercent = 0;
 
     int numRoomTries = 20;
+
+    public StageBuilderConfig( int numRoomTries) {
+        this.numRoomTries = numRoomTries;
+    }
 }
