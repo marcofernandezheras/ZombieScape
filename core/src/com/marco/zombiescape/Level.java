@@ -34,6 +34,17 @@ public class Level {
     private Box2DDebugRenderer debugRenderer;
     private Rectangle initRoom;
     private int levelNumber;
+    private LevelEnd levelEndObject;
+
+    public boolean isLevelEnd() {
+        return levelEnd;
+    }
+
+    public void setLevelEnd(boolean levelEnd) {
+        this.levelEnd = levelEnd;
+    }
+
+    private boolean levelEnd = false;
 
     public Player getPlayer() {
         return player;
@@ -64,9 +75,11 @@ public class Level {
         return levelNumber;
     }
 
-    public Level init(int levelNumber){
-        this.levelNumber = levelNumber <= 10 ? levelNumber : 10;
-        DungeonBuilder dungeonBuilder = new DungeonBuilder(new StageBuilderConfig((levelNumber + 2) * 2));
+
+
+    public Level init(int level){
+        this.levelNumber = level <= 15 ? level : 15;
+        DungeonBuilder dungeonBuilder = new DungeonBuilder(new StageBuilderConfig((level + 2) * 2 , levelNumber * 100 / 12));
         stage = new MapStage((2 * levelNumber) + 31, (2 * levelNumber) + 31);
         dungeonBuilder.generate(stage);
         background = MapTextureFactory.getTextureFor(stage);
@@ -79,8 +92,7 @@ public class Level {
         Rectangle opositeRoom = stage.getOpositeRoom(initRoom);
         Vector2 v2 = new Vector2();
         opositeRoom.getCenter(v2);
-        new PointLight(WorldMapFactory.rayHandler, 15, Color.RED, 5, v2.x, v2.y);
-
+        levelEndObject = new LevelEnd(this, v2.x, v2.y);
         return this;
     }
 
@@ -89,7 +101,7 @@ public class Level {
         initRoom.getCenter(v2);
         player = new Player(world, v2.x , v2.y);
         //TODO copy old player stats on new level
-        new PointLight(WorldMapFactory.rayHandler, 15, null, 5, player.getX(), player.getY());
+        new PointLight(WorldMapFactory.rayHandler, 15, Color.RED, 5, player.getX(), player.getY()).setStaticLight(true);
     }
 
     private void initZombies(){
@@ -110,7 +122,7 @@ public class Level {
         camera.setToOrtho(false);
 
 
-        if (Gdx.input.isKeyJustPressed(Input.Keys.O)) return true;
+        if (Gdx.input.isKeyJustPressed(Input.Keys.O)) levelEnd = true;
         if (Gdx.input.isKeyJustPressed(Input.Keys.P)) Constants.DEBUG = !Constants.DEBUG;
         if (Gdx.input.isKeyJustPressed(Input.Keys.L)) Constants.LIGTHS = !Constants.LIGTHS;
 
@@ -143,10 +155,12 @@ public class Level {
                 (int)((player.getX() * Constants.METER2PIXEL) - camera.viewportWidth),
                 (int)(background.getHeight() - (player.getY() * Constants.METER2PIXEL + camera.viewportHeight)),
                 (int)camera.viewportWidth*2, (int)camera.viewportHeight*2);
+        levelEndObject.draw(batch);
         player.draw(batch);
 
         Zombie.zombiePool.forEach(zombie -> zombie.draw(batch));
         Bullet.bulletPool.forEach(b -> b.draw(batch));
+
         batch.end();
 
         Matrix4 combined = new Matrix4(camera.combined);
@@ -158,7 +172,7 @@ public class Level {
         }
 
         if(Constants.DEBUG) debugRenderer.render(world, combined);
-        return false;
+        return levelEnd;
     }
 
     public void dispose(){

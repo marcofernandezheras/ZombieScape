@@ -63,7 +63,7 @@ public class Player implements Hittable {
 
         ConeLight light = new ConeLight(WorldMapFactory.rayHandler, 15, Color.WHITE, 8.5f, body.getWorldCenter().x, body.getWorldCenter().y, (float) toRadians(90), 25f);
         light.attachToBody(lightBody);
-        light.setSoftnessLength(.5f);
+        light.setSoftnessLength(1.5f);
         createFriction(world);
     }
 

@@ -14,7 +14,10 @@ public class StageBuilderConfig {
 
     int numRoomTries = 20;
 
-    public StageBuilderConfig( int numRoomTries) {
+    public StageBuilderConfig( int numRoomTries, int windingPercent) {
         this.numRoomTries = numRoomTries;
+        this.windingPercent = windingPercent;
+        this.extraConnectorChance = windingPercent;
+        System.out.println(windingPercent);
     }
 }

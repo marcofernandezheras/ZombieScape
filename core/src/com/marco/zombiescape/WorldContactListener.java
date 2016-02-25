@@ -52,6 +52,13 @@ public class WorldContactListener implements ContactListener {
             boolean isSensor = userData instanceof Player ? contact.getFixtureA().isSensor() : contact.getFixtureB().isSensor();
             handleBeginContactZombiePlayer(z,p, isSensor);
         }
+        else if((userData instanceof LevelEnd || userData1 instanceof LevelEnd)
+                && (userData instanceof Player || userData1 instanceof Player)){
+            LevelEnd l = userData instanceof LevelEnd ? (LevelEnd)userData : (LevelEnd)userData1;
+            boolean isSensor = userData instanceof Player ? contact.getFixtureA().isSensor() : contact.getFixtureB().isSensor();
+            if(!isSensor)
+                l.notifyLevel();
+        }
     }
 
     @Override
@@ -70,7 +77,7 @@ public class WorldContactListener implements ContactListener {
 
     @Override
     public void preSolve(Contact contact, Manifold oldManifold) {
-        Object userData = contact.getFixtureA().getUserData();
+       Object userData = contact.getFixtureA().getUserData();
         Object userData1 = contact.getFixtureB().getUserData();
         if(userData instanceof Bullet || userData1 instanceof Bullet){
             if(userData instanceof Zombie || userData1 instanceof Zombie){

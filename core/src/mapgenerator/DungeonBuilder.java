@@ -241,7 +241,8 @@ public class DungeonBuilder extends StageBuilder {
                 // Based on how "windy" passages are, try to prefer carving in the
                 // same direction.
                 int[] dir;
-                if (lastDir!= null && unmadeCells.contains(lastDir) && random.nextInt(1, 100) > config.windingPercent) {
+                final int[] fd = lastDir;
+                if (lastDir!= null && unmadeCells.stream().anyMatch(d -> d[0] == fd[0] && d[1] == fd[1]) && random.nextInt(1, 100) > config.windingPercent) {
                     dir = lastDir;
                 } else {
                     dir = unmadeCells.get(random.nextInt(0, unmadeCells.size()));

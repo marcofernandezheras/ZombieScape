@@ -57,7 +57,7 @@ public class Zombie implements Hittable, Deletable, Disposable {
     private boolean deleteMe = false;
 
     private Zombie(World world, float x, float y) {
-        finder = new AStarPathFinder(WorldMapFactory.mapStage, 100, false);
+        finder = new AStarPathFinder(WorldMapFactory.mapStage, 20, false);
         spriteNumber = ThreadLocalRandom.current().nextInt(0, Direction.sprites.length);
         hittableListeners = new ArrayList<>();
 
