@@ -49,40 +49,29 @@ public class Zombie implements Hitable, Deleteable, Disposable {
 
     private static final class Direction {
         static final int UP = 0, RIGTH = 1, DOWN = 2, LEFT = 3;
-        static final Sprite[] up =    {
-                new Sprite(new Texture("zombie/up_0.png")),
-                new Sprite(new Texture("zombie/up_1.png")),
-                new Sprite(new Texture("zombie/up_2.png"))
-        };
-        static final Sprite[] down =  {
-                new Sprite(new Texture("zombie/down_0.png")),
-                new Sprite(new Texture("zombie/down_1.png")),
-                new Sprite(new Texture("zombie/down_2.png"))
-        };
-        static final Sprite[] left =  {
-                new Sprite(new Texture("zombie/left_0.png")),
-                new Sprite(new Texture("zombie/left_1.png")),
-                new Sprite(new Texture("zombie/left_2.png"))
-        };
-        static final Sprite[] right = {
-                new Sprite(new Texture("zombie/right_0.png")),
-                new Sprite(new Texture("zombie/right_1.png")),
-                new Sprite(new Texture("zombie/right_2.png"))
-        };
+        static final Sprite[][][] sprites = new Sprite[8][4][3];
     }
 
+    static {
+        String [] aux = { "up_%d.png", "right_%d.png",  "down_%d.png", "left_%d.png"};
+
+        for (int i = 0; i < Direction.sprites.length; i++) {
+            for (int j = 0; j < Direction.sprites[i].length; j++) {
+                for (int k = 0; k < Direction.sprites[i][j].length; k++) {
+                    Direction.sprites[i][j][k] = new Sprite(new Texture(String.format("zombie%d/%s", i, String.format(aux[j], k))));
+                    Direction.sprites[i][j][k].getTexture().setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+                }
+            }
+        }
+    }
+    
     public static void disposeZombies(){
-        for (Sprite sprite : Direction.up) {
-            sprite.getTexture().dispose();
-        }
-        for (Sprite sprite : Direction.down) {
-            sprite.getTexture().dispose();
-        }
-        for (Sprite sprite : Direction.left) {
-            sprite.getTexture().dispose();
-        }
-        for (Sprite sprite : Direction.right) {
-            sprite.getTexture().dispose();
+        for (int i = 0; i < Direction.sprites.length; i++) {
+            for (int j = 0; j < Direction.sprites[i].length; j++) {
+                for (int k = 0; k < Direction.sprites[i][j].length; k++) {
+                    Direction.sprites[i][j][k].getTexture().dispose();
+                }
+            }
         }
     }
 
@@ -97,11 +86,13 @@ public class Zombie implements Hitable, Deleteable, Disposable {
     private int life;
     private ArrayList<HitableListener> hitableListeners;
     private boolean deleteMe = false;
+    private final int spriteNumber;
 
     public Zombie(World world, float x, float y) {
         if(finder == null){
             finder = new AStarPathFinder(WorldMapFactory.mapStage, 100, false);
         }
+        spriteNumber = ThreadLocalRandom.current().nextInt(0, Direction.sprites.length);
         hitableListeners = new ArrayList<>();
 
         BodyDef def = new BodyDef();
@@ -142,6 +133,10 @@ public class Zombie implements Hitable, Deleteable, Disposable {
 
     public void act(){
         delta += Gdx.graphics.getDeltaTime();
+        if(delta> .07){
+            frame = (frame + 1)%3;
+            delta = 0;
+        }
         if(aggro){
             Vector2 center = body.getWorldCenter();
             Path path = finder.findPath((int) (center.x * 2), (int) (center.y * 2), (int) (player.getX() * 2), (int) (player.getY() * 2));
@@ -178,20 +173,8 @@ public class Zombie implements Hitable, Deleteable, Disposable {
         Sprite currentSprite;
         if (Float.compare(body.getLinearVelocity().len(), 0) == 0)
             frame = 0;
-        switch (currentDirection) {
-            case Direction.UP:
-                currentSprite = Direction.up[frame];
-                break;
-            case Direction.LEFT:
-                currentSprite = Direction.left[frame];
-                break;
-            case Direction.RIGTH:
-                currentSprite = Direction.right[frame];
-                break;
-            default:
-                currentSprite = Direction.down[frame];
-        }
-        currentSprite.getTexture().setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+
+        currentSprite = Direction.sprites[spriteNumber][currentDirection][frame];
 
         currentSprite.setPosition((worldCenter.x * Constants.METER2PIXEL) - currentSprite.getWidth() / 2,
                 worldCenter.y * Constants.METER2PIXEL - currentSprite.getHeight() / 2);
