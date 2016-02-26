@@ -203,6 +203,11 @@ public class Zombie implements Hittable, Deletable, Disposable {
     }
 
     @Override
+    public int getMaxLife() {
+        return 0;
+    }
+
+    @Override
     public void addHitListener(HittableListener hittableListener) {
         hittableListeners.add(hittableListener);
     }

@@ -26,6 +26,15 @@ import java.util.concurrent.ThreadLocalRandom;
 public class Level {
 
     private static final int MAX_SIZE = 63; //TODO Tested for framebuffer max size, split background on multiple textures
+    private CODE returnCode;
+
+    public void setLevelEnd() {
+        returnCode = CODE.NEXT_LEVEL;
+    }
+
+    public enum CODE{
+        CONTINUE, NEXT_LEVEL, GAME_OVER
+    }
 
     private Texture background;
     private World world;
@@ -35,16 +44,6 @@ public class Level {
     private Rectangle initRoom;
     private int levelNumber;
     private LevelEnd levelEndObject;
-
-    public boolean isLevelEnd() {
-        return levelEnd;
-    }
-
-    public void setLevelEnd(boolean levelEnd) {
-        this.levelEnd = levelEnd;
-    }
-
-    private boolean levelEnd = false;
 
     public Player getPlayer() {
         return player;
@@ -99,8 +98,12 @@ public class Level {
     private void initPlayer(Player oldPlayer){
         Vector2 v2 = new Vector2();
         initRoom.getCenter(v2);
-        player = new Player(world, v2.x , v2.y);
-        //TODO copy old player stats on new level
+        if (oldPlayer != null){
+            player = new Player(world, v2.x , v2.y, oldPlayer);
+        }
+        else {
+            player = new Player(world, v2.x , v2.y);
+        }
         new PointLight(WorldMapFactory.rayHandler, 15, Color.RED, 5, player.getX(), player.getY()).setStaticLight(true);
     }
 
@@ -116,13 +119,17 @@ public class Level {
         }
     }
 
-    public boolean render(){
+    public CODE render(){
+        if(returnCode == CODE.NEXT_LEVEL)
+            return returnCode;
+        
+        returnCode = CODE.CONTINUE;
         Gdx.gl.glClearColor(0, 0, 0, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         camera.setToOrtho(false);
 
 
-        if (Gdx.input.isKeyJustPressed(Input.Keys.O)) levelEnd = true;
+        if (Gdx.input.isKeyJustPressed(Input.Keys.O)) returnCode = CODE.NEXT_LEVEL;
         if (Gdx.input.isKeyJustPressed(Input.Keys.P)) Constants.DEBUG = !Constants.DEBUG;
         if (Gdx.input.isKeyJustPressed(Input.Keys.L)) Constants.LIGTHS = !Constants.LIGTHS;
 
@@ -171,8 +178,11 @@ public class Level {
             WorldMapFactory.rayHandler.updateAndRender();
         }
 
+        if(player.getLife() <= 0)
+            returnCode = CODE.GAME_OVER;
+
         if(Constants.DEBUG) debugRenderer.render(world, combined);
-        return levelEnd;
+        return returnCode;
     }
 
     public void dispose(){

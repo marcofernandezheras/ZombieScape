@@ -44,6 +44,6 @@ public class LevelEnd {
     }
 
     public void notifyLevel(){
-        this.level.setLevelEnd(true);
+        this.level.setLevelEnd();
     }
 }

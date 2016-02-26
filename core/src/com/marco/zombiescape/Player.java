@@ -11,6 +11,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.physics.box2d.joints.FrictionJointDef;
+import com.badlogic.gdx.utils.Disposable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +46,7 @@ public class Player implements Hittable {
     private World world;
     private List<HittableListener> hittableListeners = new ArrayList<>();
     private boolean inHit = false;
-    private int life = 50;
+    private int life = 100;
     private int currentDirection = Direction.DOWN;
     private final Body body;
     private Body lightBody;
@@ -67,6 +68,10 @@ public class Player implements Hittable {
         createFriction(world);
     }
 
+    public Player(World world, float x, float y, Player oldPlayer) {
+        this(world,x,y);
+        this.life = oldPlayer.life;
+    }
     private Body createBody(World world, float x, float y) {
         Body bodyAux;
         BodyDef def = new BodyDef();
@@ -155,7 +160,7 @@ public class Player implements Hittable {
             }, center.x - 0.18f, center.y - 0.18f, center.x + 0.18f, center.y + 0.18f);
 
             if(stillInHit[0]) {
-                life -= 10;
+                life -= 1;
                 hittableListeners.forEach(l -> l.hitted(Player.this));
                 System.out.println("Player: " + life);
             }
@@ -243,6 +248,11 @@ public class Player implements Hittable {
     @Override
     public int getLife() {
         return life;
+    }
+
+    @Override
+    public int getMaxLife() {
+        return 100;
     }
 
     @Override

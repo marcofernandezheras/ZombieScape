@@ -12,5 +12,6 @@ public interface Hittable {
     void beginHit();
     void endHit();
     int getLife();
+    int getMaxLife();
     void addHitListener(HittableListener hittableListener);
 }
