@@ -33,7 +33,7 @@ public class Level {
     }
 
     public enum CODE{
-        CONTINUE, NEXT_LEVEL, GAME_OVER
+        CONTINUE, NEXT_LEVEL, GAME_OVER, PAUSE
     }
 
     private Texture background;
@@ -130,6 +130,7 @@ public class Level {
 
 
         if (Gdx.input.isKeyJustPressed(Input.Keys.O)) returnCode = CODE.NEXT_LEVEL;
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) returnCode = CODE.PAUSE;
         if (Gdx.input.isKeyJustPressed(Input.Keys.P)) Constants.DEBUG = !Constants.DEBUG;
         if (Gdx.input.isKeyJustPressed(Input.Keys.L)) Constants.LIGTHS = !Constants.LIGTHS;
 
