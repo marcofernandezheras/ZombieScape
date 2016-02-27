@@ -1,5 +1,7 @@
 package com.marco.zombiescape;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -10,14 +12,16 @@ import com.badlogic.gdx.utils.Disposable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Created by marco on 12/02/16.
  */
 public class Bullet implements Deletable, Disposable {
     private final Body bullet;
-    private static final Sprite sprite = new Sprite(Resources.instance.getRegion("bullet"));//new Texture("bullet.png"););
+    private static final Sprite sprite = new Sprite(Resources.instance.getRegion("bullet"));
     private boolean deleteMe = false;
+    public static Sound buletSound = Gdx.audio.newSound(Gdx.files.internal("shootSound.mp3"));
 
     protected static final List<Bullet> bulletPool = new ArrayList<>();
 
@@ -46,10 +50,11 @@ public class Bullet implements Deletable, Disposable {
         frictionJointDef.bodyA = bullet;
         frictionJointDef.bodyB = WorldMapFactory.getGroundBody();
 
-        frictionJointDef.maxForce = 0f; //This the most force the joint will apply to your object. The faster its moving the more force applied
+        frictionJointDef.maxForce = 0f; //This the most force the joint will applya to your object. The faster its moving the more force applied
         frictionJointDef.maxTorque = 0; //Set to 0 to prevent rotation
 
         WorldMapFactory.world.createJoint(frictionJointDef);
+        buletSound.play(0.3f);
     }
 
     public static Bullet newBullet(float fromX, float fromY, float angle){

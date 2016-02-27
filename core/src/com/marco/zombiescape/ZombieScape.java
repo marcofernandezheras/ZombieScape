@@ -3,6 +3,7 @@ package com.marco.zombiescape;
 import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
@@ -34,6 +35,7 @@ public class ZombieScape extends ApplicationAdapter{
     @Override
 	public void create () {
 		Box2D.init();
+        Gdx.audio.newSound(Gdx.files.internal("ambientSound.wav")).loop();
 		currentLevel = new Level().init(1);
         hudBatch = new SpriteBatch();
         camera = new OrthographicCamera();
@@ -174,6 +176,7 @@ public class ZombieScape extends ApplicationAdapter{
     public void dispose() {
         super.dispose();
         currentLevel.dispose();
+        Bullet.buletSound.dispose();
         WorldMapFactory.rayHandler.dispose();
         Resources.instance.dispose();
     }

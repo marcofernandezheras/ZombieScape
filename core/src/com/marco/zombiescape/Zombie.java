@@ -1,6 +1,7 @@
 package com.marco.zombiescape;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
@@ -22,6 +23,8 @@ import static java.lang.Math.atan2;
  * Created by marco on 11/02/16.
  */
 public class Zombie implements Hittable, Deletable, Disposable {
+
+    private final Sound sound;
 
     private static final class Direction {
         private Direction(){}
@@ -49,6 +52,7 @@ public class Zombie implements Hittable, Deletable, Disposable {
     private final Body body;
     private final int spriteNumber;
     private float delta;
+    private float sounddelta;
     private int frame = 0;
     boolean aggro = false;
     private Player player;
@@ -63,6 +67,7 @@ public class Zombie implements Hittable, Deletable, Disposable {
         finder = new AStarPathFinder(WorldMapFactory.mapStage, 20, false);
         bloodSprite = new Sprite(Resources.instance.getRegion("blood", ThreadLocalRandom.current().nextInt(0,7)));
         spriteNumber = ThreadLocalRandom.current().nextInt(0, Direction.sprites.length);
+        sound = Gdx.audio.newSound(Gdx.files.internal(String.format("zombieSound_%d.wav", ThreadLocalRandom.current().nextInt(0,3))));
         hittableListeners = new ArrayList<>();
 
         BodyDef def = new BodyDef();
@@ -105,15 +110,22 @@ public class Zombie implements Hittable, Deletable, Disposable {
     public void setAggro(Player player){
         this.player = player;
         aggro = true;
+        sound.play(0.3f);
     }
 
     public void act(){
-        delta += Gdx.graphics.getDeltaTime();
+        float deltaTime = Gdx.graphics.getDeltaTime();
+        delta += deltaTime;
         if(delta> .07){
             frame = (frame + 1)%3;
             delta = 0;
         }
         if(aggro){
+            sounddelta += deltaTime;
+            if(sounddelta > 5){
+                sound.play(0.5f);
+                sounddelta = 0;
+            }
             Vector2 center = body.getWorldCenter();
             Path path = finder.findPath((int) (center.x * 2), (int) (center.y * 2), (int) (player.getX() * 2), (int) (player.getY() * 2));
             if(path != null && path.getLength() > 1){
