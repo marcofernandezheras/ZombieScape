@@ -43,6 +43,7 @@ public class Zombie implements Hittable, Deletable, Disposable {
 
     private AStarPathFinder finder = null;
     protected static final List<Zombie> zombiePool = new ArrayList<>();
+    protected static final List<Zombie> bloodPool = new ArrayList<>();
 
     private int currentDirection = Direction.DOWN;
     private final Body body;
@@ -54,9 +55,13 @@ public class Zombie implements Hittable, Deletable, Disposable {
     private int life;
     private ArrayList<HittableListener> hittableListeners;
     private boolean deleteMe = false;
+    private Sprite bloodSprite;
+    float bloodX;
+    float bloodY;
 
     private Zombie(World world, float x, float y) {
         finder = new AStarPathFinder(WorldMapFactory.mapStage, 20, false);
+        bloodSprite = new Sprite(Resources.instance.getRegion("blood", ThreadLocalRandom.current().nextInt(0,7)));
         spriteNumber = ThreadLocalRandom.current().nextInt(0, Direction.sprites.length);
         hittableListeners = new ArrayList<>();
 
@@ -143,15 +148,21 @@ public class Zombie implements Hittable, Deletable, Disposable {
     }
 
     public void draw(final SpriteBatch batch){
-        Vector2 worldCenter = body.getWorldCenter();
         Sprite currentSprite;
-        if (Float.compare(body.getLinearVelocity().len(), 0) == 0)
-            frame = 0;
+        if(!isMarketToDelete()) {
+            Vector2 worldCenter = body.getWorldCenter();
+            if (Float.compare(body.getLinearVelocity().len(), 0) == 0)
+                frame = 0;
 
-        currentSprite = Direction.sprites[spriteNumber][currentDirection][frame];
+            currentSprite = Direction.sprites[spriteNumber][currentDirection][frame];
 
-        currentSprite.setPosition((worldCenter.x * Constants.METER2PIXEL) - currentSprite.getWidth() / 2,
-                worldCenter.y * Constants.METER2PIXEL - currentSprite.getHeight() / 2);
+            currentSprite.setPosition((worldCenter.x * Constants.METER2PIXEL) - currentSprite.getWidth() / 2,
+                    worldCenter.y * Constants.METER2PIXEL - currentSprite.getHeight() / 2);
+        }
+        else{
+            currentSprite = bloodSprite;
+            currentSprite.setPosition(bloodX - currentSprite.getWidth() / 2.0f, bloodY - currentSprite.getHeight() / 2.0f);
+        }
         currentSprite.draw(batch);
     }
 
@@ -166,6 +177,9 @@ public class Zombie implements Hittable, Deletable, Disposable {
     //DELETABLE
     @Override
     public void markToDelete() {
+        Vector2 worldCenter = body.getWorldCenter();
+        bloodX = worldCenter.x * Constants.METER2PIXEL;
+        bloodY = worldCenter.y * Constants.METER2PIXEL;
         deleteMe = true;
     }
 
@@ -208,6 +222,7 @@ public class Zombie implements Hittable, Deletable, Disposable {
             System.out.println("Zombi dispose");
             body.getFixtureList().get(0).setUserData(null);
             WorldMapFactory.world.destroyBody(body);
+            bloodPool.add(this);
         } catch(Exception e){}
     }
 }

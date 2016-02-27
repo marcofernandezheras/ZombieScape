@@ -34,7 +34,7 @@ public class ZombieScape extends ApplicationAdapter{
     @Override
 	public void create () {
 		Box2D.init();
-		currentLevel = new Level().init(15);
+		currentLevel = new Level().init(1);
         hudBatch = new SpriteBatch();
         camera = new OrthographicCamera();
         lifeHud = new LifeHud(currentLevel.getPlayer());

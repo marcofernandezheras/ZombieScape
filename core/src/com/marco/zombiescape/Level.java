@@ -76,9 +76,10 @@ public class Level {
     }
 
     public Level init(int level){
+        ThreadLocalRandom rnd = ThreadLocalRandom.current();
         this.levelNumber = level <= 15 ? level : 15;
         DungeonBuilder dungeonBuilder = new DungeonBuilder(new StageBuilderConfig((level + 2) * 2 , levelNumber * 100 / 12));
-        stage = new MapStage((2 * levelNumber) + 31, (2 * levelNumber) + 31);
+        stage = new MapStage((2 * levelNumber) + (rnd.nextInt(10, 16) * 2) + 1, (2 * levelNumber)  + (rnd.nextInt(10, 16) * 2) + 1);
         dungeonBuilder.generate(stage);
         background = MapTextureFactory.getTextureFor(stage);
         world = WorldMapFactory.getWorldFor(stage);
@@ -176,6 +177,8 @@ public class Level {
                 (int)(background.getHeight() - (player.getY() * Constants.METER2PIXEL + camera.viewportHeight)),
                 (int)camera.viewportWidth*2, (int)camera.viewportHeight*2);
         levelEndObject.draw(batch);
+        Zombie.bloodPool.forEach(b -> b.draw(batch));
+
         player.draw(batch);
 
         Zombie.zombiePool.forEach(zombie -> zombie.draw(batch));
@@ -203,6 +206,7 @@ public class Level {
         batch.dispose();
         debugRenderer.dispose();
         Zombie.zombiePool.clear();
+        Zombie.bloodPool.clear();
         Bullet.bulletPool.clear();
         world.dispose();
     }
