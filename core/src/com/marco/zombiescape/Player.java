@@ -53,11 +53,14 @@ public class Player implements Hittable {
     private Vector2 velocity = new Vector2();
     private float delta;
     private int frame = 0;
-    public float shootDelay = 0;
+    Weapon currentWeapon;
 
     public Player(World world, float x, float y) {
         this.world = world;
         body = createBody(world, x, y);
+
+        currentWeapon = new MachineGun(body);
+
         PointLight pointLight = new PointLight(WorldMapFactory.rayHandler, 15, null, .5f, body.getWorldCenter().x, body.getWorldCenter().y);
         pointLight.attachToBody(body);
         pointLight.setSoft(false);
@@ -146,7 +149,8 @@ public class Player implements Hittable {
 
 
     public void act(float mx, float my){
-        delta += Gdx.graphics.getDeltaTime();
+        float deltaTime = Gdx.graphics.getDeltaTime();
+        delta += deltaTime;
 
         Vector2 center = body.getWorldCenter();
         if(inHit){
@@ -179,12 +183,14 @@ public class Player implements Hittable {
 
         updateDirection(angle);
 
-        shootDelay += delta;
-
-        if(Gdx.input.isButtonPressed(0) && shootDelay > .05){
-            shootDelay = 0;
-            shooTo(angle);
+        if(Gdx.input.isButtonPressed(0)){
+            currentWeapon.startShooting();
         }
+        else{
+            currentWeapon.stopShooting();
+        }
+
+        currentWeapon.act(deltaTime, angle);
     }
 
     private void updateDirection(double angle) {
@@ -221,10 +227,6 @@ public class Player implements Hittable {
         body.applyLinearImpulse(velocity, center, true);
     }
 
-    private void shooTo(float angle) {
-        Vector2 worldCenter = body.getWorldCenter();
-        Bullet.newBullet(worldCenter.x, worldCenter.y, angle);
-    }
 
     //HITTABLE
     @Override
