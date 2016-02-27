@@ -19,8 +19,11 @@ public class LifeHud implements Disposable {
 
     public LifeHud(Hittable hittable) {
         this.hittable = hittable;
-        this.base = new Sprite(new Texture("hud/hudLife.png"));
-        this.bar = new Sprite(new Texture("hud/hudLifeBar.png"));
+        Resources resources = Resources.instance;
+        this.base = new Sprite(resources.getRegion("hudLife"));//new Texture("hud/hudLife.png")
+        this.bar = new Sprite(resources.getRegion("hudLifeBar"));//new Texture("hud/hudLifeBar.png")
+        base.getTexture().setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+        bar.getTexture().setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
         bar.setPosition(32,7);
         maxWidth = bar.getWidth();
         hittableLife = hittable.getLife();

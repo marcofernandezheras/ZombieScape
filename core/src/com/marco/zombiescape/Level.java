@@ -17,6 +17,7 @@ import com.badlogic.gdx.physics.box2d.World;
 import mapgenerator.DungeonBuilder;
 import mapgenerator.MapStage;
 import mapgenerator.StageBuilderConfig;
+import mapgenerator.Tile;
 
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -74,8 +75,6 @@ public class Level {
         return levelNumber;
     }
 
-
-
     public Level init(int level){
         this.levelNumber = level <= 15 ? level : 15;
         DungeonBuilder dungeonBuilder = new DungeonBuilder(new StageBuilderConfig((level + 2) * 2 , levelNumber * 100 / 12));
@@ -108,13 +107,26 @@ public class Level {
     }
 
     private void initZombies(){
+        ThreadLocalRandom rdn = ThreadLocalRandom.current();
         for (Rectangle r : stage.getRooms()) {
-            ThreadLocalRandom rdn = ThreadLocalRandom.current();
             int maxZombies = (int) Math.ceil(r.getWidth() * r.getHeight() / 4.0);
             if(r != initRoom) {
                 for (int i = 0; i < maxZombies; i++) {
                     Zombie.newZombie(world, (float)rdn.nextDouble(r.getX()+0.5f, r.getX() - 0.5f + r.getWidth()), (float)rdn.nextDouble(r.getY() + 0.5f, r.getY() - 0.5f + r.getHeight()));
                 }
+            }
+        }
+
+        int maxH = stage.height();
+        int maxW = stage.width();
+        int maxZ = levelNumber * 5;
+        int z = 0;
+        while (z < maxZ){
+            int y = rdn.nextInt(0, maxH);
+            int x = rdn.nextInt(0, maxW);
+            if(stage.getTiles()[y][x].equals(Tile.FLOOR)){
+                Zombie.newZombie(world, (x+0.5f)*0.5f, (y+0.5f)*0.5f);
+                z++;
             }
         }
     }

@@ -13,7 +13,7 @@ import com.badlogic.gdx.physics.box2d.*;
 public class LevelEnd {
     private final Body body;
     private Level level;
-    private static final Sprite sprite = new Sprite(new Texture("exit_0.png"));
+    private static final Sprite sprite = new Sprite(Resources.instance.getRegion("exit", 0));//new Texture("exit_0.png")
 
     public LevelEnd(Level level, float x, float y) {
         this.level = level;

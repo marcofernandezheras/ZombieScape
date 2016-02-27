@@ -33,11 +33,11 @@ public class Player implements Hittable {
         private Direction(){}
 
         static {
-            String[] aux = {"player/up_%d.png", "player/right_%d.png", "player/down_%d.png", "player/left_%d.png"};
+            Resources resources = Resources.instance;
+            String[] aux = {"playerup", "playerright", "playerdown", "playerleft"};
             for (int i = 0; i < sprites.length; i++) {
                 for (int j = 0; j < sprites[i].length; j++) {
-                    sprites[i][j] = new Sprite(new Texture(String.format(aux[i],j)));
-                    sprites[i][j].getTexture().setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+                    sprites[i][j] = new Sprite(resources.getRegion(aux[i], j));//new Texture(String.format(aux[i],j))
                 }
             }
         }
@@ -224,14 +224,6 @@ public class Player implements Hittable {
     private void shooTo(float angle) {
         Vector2 worldCenter = body.getWorldCenter();
         Bullet.newBullet(worldCenter.x, worldCenter.y, angle);
-    }
-
-    public static void dispose(){
-        for (int i = 0; i < Direction.sprites.length; i++) {
-            for (int j = 0; j < Direction.sprites[i].length; j++) {
-                Direction.sprites[i][j].getTexture().dispose();
-            }
-        }
     }
 
     //HITTABLE

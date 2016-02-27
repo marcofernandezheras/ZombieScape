@@ -16,15 +16,12 @@ import java.util.List;
  */
 public class Bullet implements Deletable, Disposable {
     private final Body bullet;
-    private static final Texture BULLET_TEX = new Texture("bullet.png");
-    private final Sprite sprite;
+    private static final Sprite sprite = new Sprite(Resources.instance.getRegion("bullet"));//new Texture("bullet.png"););
     private boolean deleteMe = false;
 
     protected static final List<Bullet> bulletPool = new ArrayList<>();
 
     private Bullet(float fromX, float fromY, float angle) {
-        sprite = new Sprite(BULLET_TEX);
-
         BodyDef def = new BodyDef();
         def.type = BodyDef.BodyType.DynamicBody;
         def.bullet = true;

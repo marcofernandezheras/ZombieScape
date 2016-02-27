@@ -4,6 +4,7 @@ import com.badlogic.gdx.graphics.Pixmap;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.graphics.glutils.FrameBuffer;
 import com.badlogic.gdx.math.Matrix4;
 import mapgenerator.MapStage;
@@ -17,7 +18,7 @@ import java.util.Arrays;
 public class MapTextureFactory {
     private static final int TILE_SIZE = 64;
     private MapTextureFactory() {}
-    private static Texture wall_8_tex;
+    private static Sprite wall8 = new Sprite(Resources.instance.getRegion("wall", 8));
     private static boolean[] directionAux = new boolean[4];
 
     private static int getWallsAround(Tile[][] tiles, int x, int y){
@@ -60,26 +61,18 @@ public class MapTextureFactory {
 
         fbo.begin();
 
-        Texture floor_tex = new Texture("floor_0.png");
-        Texture wall_3_tex = new Texture("wall_3.png");
-        Texture wall_5_tex = new Texture("wall_5.png");
-        Texture wall_7_tex = new Texture("wall_7.png");
+        Resources resources = Resources.instance;
 
-        Texture point_tex = new Texture("point.png");
-
-        wall_8_tex = new Texture("wall_8.png");
-
-
-        Sprite floor = new Sprite(floor_tex);
+        Sprite floor = new Sprite(resources.getRegion("floor", 0));
         floor.flip(false,true);
 
-        Sprite wall_3 = new Sprite(wall_3_tex);
+        Sprite wall_3 = new Sprite(resources.getRegion("wall", 3));
         wall_3.flip(false, true);
 
-        Sprite wall_5 = new Sprite(wall_5_tex);
+        Sprite wall_5 = new Sprite(resources.getRegion("wall", 5));
         wall_5.flip(false, true);
 
-        Sprite wall_7 = new Sprite(wall_7_tex);
+        Sprite wall_7 = new Sprite(resources.getRegion("wall", 7));
         wall_7.flip(false, true);
 
         //Set the batch to render the size of fbo
@@ -108,7 +101,8 @@ public class MapTextureFactory {
                             paintWall7(tiles, x, y, wall_7, batch);
                             break;
                         default:
-                            batch.draw(wall_8_tex,TILE_SIZE * x, (TILE_SIZE * (tiles.length - y))-TILE_SIZE);
+                            wall8.setPosition(TILE_SIZE * x, (TILE_SIZE * (tiles.length - y))-TILE_SIZE);
+                            wall8.draw(batch);
                     }
                 }
                 else if(tiles[y][x].equals(Tile.DOOR)){
@@ -125,15 +119,6 @@ public class MapTextureFactory {
 
         batch.end();
         fbo.end();
-
-        //Dispose tile textures
-        floor_tex.dispose();
-        wall_3_tex.dispose();
-        wall_5_tex.dispose();
-        wall_7_tex.dispose();
-
-        point_tex.dispose();
-        wall_8_tex.dispose();
 
         return fbo.getColorBufferTexture();
     }
@@ -174,7 +159,8 @@ public class MapTextureFactory {
         }
         catch (Exception e){
             //wtf!?
-            batch.draw(wall_8_tex, TILE_SIZE * x, (TILE_SIZE * (tiles.length - y))-TILE_SIZE);
+            wall8.setPosition(TILE_SIZE * x, (TILE_SIZE * (tiles.length - y))-TILE_SIZE);
+            wall8.draw(batch);
         }
         return false;
     }
@@ -212,7 +198,8 @@ public class MapTextureFactory {
         }
         catch (Exception e){
             //Corners of the map
-            batch.draw(wall_8_tex, TILE_SIZE * x, (TILE_SIZE * (tiles.length - y))-TILE_SIZE);
+            wall8.setPosition(TILE_SIZE * x, (TILE_SIZE * (tiles.length - y))-TILE_SIZE);
+            wall8.draw(batch);
         }
         return false;
     }
@@ -251,7 +238,8 @@ public class MapTextureFactory {
         }
         catch (Exception e){
             //Border of the map
-            batch.draw(wall_8_tex, TILE_SIZE * x, (TILE_SIZE * (tiles.length - y))-TILE_SIZE);
+            wall8.setPosition(TILE_SIZE * x, (TILE_SIZE * (tiles.length - y))-TILE_SIZE);
+            wall8.draw(batch);
         }
         return false;
     }

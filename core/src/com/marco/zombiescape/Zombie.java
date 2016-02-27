@@ -29,13 +29,12 @@ public class Zombie implements Hittable, Deletable, Disposable {
         static final Sprite[][][] sprites = new Sprite[8][4][3];
 
         static {
-            String [] aux = { "up_%d.png", "right_%d.png",  "down_%d.png", "left_%d.png"};
-
+            String [] aux = { "z%dup", "z%dright",  "z%ddown", "z%dleft"};
+            Resources resources = Resources.instance;
             for (int i = 0; i < Direction.sprites.length; i++) {
                 for (int j = 0; j < Direction.sprites[i].length; j++) {
                     for (int k = 0; k < Direction.sprites[i][j].length; k++) {
-                        Direction.sprites[i][j][k] = new Sprite(new Texture(String.format("zombie%d/%s", i, String.format(aux[j], k))));
-                        Direction.sprites[i][j][k].getTexture().setFilter(Texture.TextureFilter.Linear, Texture.TextureFilter.Linear);
+                        Direction.sprites[i][j][k] = new Sprite(resources.getRegion(String.format(aux[j],i), k));//new Texture(String.format("zombie%d/%s", i, String.format(aux[j], k)))
                     }
                 }
             }
@@ -162,16 +161,6 @@ public class Zombie implements Hittable, Deletable, Disposable {
 
     public void changeDirection(){
         if(!aggro) body.setLinearVelocity(body.getLinearVelocity().scl(-1));
-    }
-
-    public static void disposeZombies(){
-        for (int i = 0; i < Direction.sprites.length; i++) {
-            for (int j = 0; j < Direction.sprites[i].length; j++) {
-                for (int k = 0; k < Direction.sprites[i][j].length; k++) {
-                    Direction.sprites[i][j][k].getTexture().dispose();
-                }
-            }
-        }
     }
 
     //DELETABLE

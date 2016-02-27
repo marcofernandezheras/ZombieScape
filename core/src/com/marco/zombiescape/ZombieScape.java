@@ -34,7 +34,7 @@ public class ZombieScape extends ApplicationAdapter{
     @Override
 	public void create () {
 		Box2D.init();
-		currentLevel = new Level().init(1);
+		currentLevel = new Level().init(15);
         hudBatch = new SpriteBatch();
         camera = new OrthographicCamera();
         lifeHud = new LifeHud(currentLevel.getPlayer());
@@ -140,7 +140,7 @@ public class ZombieScape extends ApplicationAdapter{
     }
 
     private void renderPlayingState(){
-        camera.setToOrtho(false);
+
         Level.CODE code = currentLevel.render();
         if(code == Level.CODE.NEXT_LEVEL) {
             Player player = currentLevel.getPlayer();
@@ -159,19 +159,22 @@ public class ZombieScape extends ApplicationAdapter{
             currentState = State.PAUSE;
         }
         else {
+            camera.zoom = 1.5f;
+            camera.update();
+            camera.setToOrtho(false);
             hudBatch.setProjectionMatrix(camera.combined);
             hudBatch.begin();
             lifeHud.draw(hudBatch);
             hudBatch.end();
+            camera.zoom = 1f;
         }
     }
 
     @Override
     public void dispose() {
         super.dispose();
-        Player.dispose();
         currentLevel.dispose();
-        Zombie.disposeZombies();
         WorldMapFactory.rayHandler.dispose();
+        Resources.instance.dispose();
     }
 }
