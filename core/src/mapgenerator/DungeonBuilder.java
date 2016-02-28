@@ -89,6 +89,13 @@ public class DungeonBuilder extends StageBuilder {
         _removeDeadEnds();
 
         stage.setTiles(inflate(stage.getTiles()));
+
+        for (int y = 1; y < stage.height(); y += 2) {
+            for (int x = 1; x < stage.width(); x += 2) {
+                if (getTile(x,y).equals(Tile.FLOOR))
+                    stage.addFloor(x,y);
+            }
+        }
     }
 
     private void _addRooms() {

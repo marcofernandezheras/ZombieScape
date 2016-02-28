@@ -15,7 +15,7 @@ public class LifeHud implements Disposable {
     private Hittable hittable;
     private final float maxWidth;
 
-    private int hittableLife;
+    private float hittableLife;
 
     public LifeHud(Hittable hittable) {
         this.hittable = hittable;

@@ -9,9 +9,9 @@ public interface Hittable {
         void hitted(Hittable hittable);
     }
 
-    void beginHit();
+    void beginHit(float damage);
     void endHit();
-    int getLife();
-    int getMaxLife();
+    float getLife();
+    float getMaxLife();
     void addHitListener(HittableListener hittableListener);
 }

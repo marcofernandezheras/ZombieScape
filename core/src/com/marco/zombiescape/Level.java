@@ -19,6 +19,7 @@ import mapgenerator.MapStage;
 import mapgenerator.StageBuilderConfig;
 import mapgenerator.Tile;
 
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -118,17 +119,11 @@ public class Level {
             }
         }
 
-        int maxH = stage.height();
-        int maxW = stage.width();
         int maxZ = levelNumber * 5;
-        int z = 0;
-        while (z < maxZ){
-            int y = rdn.nextInt(0, maxH);
-            int x = rdn.nextInt(0, maxW);
-            if(stage.getTiles()[y][x].equals(Tile.FLOOR)){
-                Zombie.newZombie(world, (x+0.5f)*0.5f, (y+0.5f)*0.5f);
-                z++;
-            }
+        List<Vector2> floors = stage.getFloors();
+        for (int i = 0; i < maxZ; i++){
+            Vector2 pos = floors.get(rdn.nextInt(0, floors.size()));
+            Zombie.newZombie(world, (pos.x+0.5f)*0.5f, (pos.y+0.5f)*0.5f);
         }
     }
 

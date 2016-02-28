@@ -5,13 +5,12 @@ import box2dLight.PointLight;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.physics.box2d.joints.FrictionJointDef;
-import com.badlogic.gdx.utils.Disposable;
+import com.marco.zombiescape.weapons.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +21,8 @@ import static java.lang.Math.*;
  * Created by marco on 10/02/16.
  */
 public class Player implements Hittable {
+
+    private float currentDamage;
 
     private static final class Direction {
         static final int UP = 0;
@@ -46,20 +47,27 @@ public class Player implements Hittable {
     private World world;
     private List<HittableListener> hittableListeners = new ArrayList<>();
     private boolean inHit = false;
-    private int life = 100;
+    private float life = 100;
     private int currentDirection = Direction.DOWN;
     private final Body body;
     private Body lightBody;
     private Vector2 velocity = new Vector2();
     private float delta;
     private int frame = 0;
-    Weapon currentWeapon;
+
+    private float maxLife = 100;
+    private List<Weapon> weapons = new ArrayList<>();
+    int currentWeapon;
 
     public Player(World world, float x, float y) {
         this.world = world;
         body = createBody(world, x, y);
 
-        currentWeapon = new MachineGun(body);
+        weapons.add(new Knife(body));
+        weapons.add(new Pistol(body));
+        weapons.add(new MachineGun(body));
+        weapons.add(new Shotgun(body));
+        currentWeapon = 0;
 
         PointLight pointLight = new PointLight(WorldMapFactory.rayHandler, 15, null, .5f, body.getWorldCenter().x, body.getWorldCenter().y);
         pointLight.attachToBody(body);
@@ -74,6 +82,9 @@ public class Player implements Hittable {
     public Player(World world, float x, float y, Player oldPlayer) {
         this(world,x,y);
         this.life = oldPlayer.life;
+        this.weapons = oldPlayer.weapons;
+        this.currentWeapon = oldPlayer.currentWeapon;
+        weapons.forEach(w -> w.setBody(body));
     }
     private Body createBody(World world, float x, float y) {
         Body bodyAux;
@@ -136,7 +147,16 @@ public class Player implements Hittable {
         Vector2 worldCenter = body.getWorldCenter();
         currentSprite.setPosition((worldCenter.x * Constants.METER2PIXEL) - currentSprite.getWidth()/2,
                 worldCenter.y * Constants.METER2PIXEL - currentSprite.getHeight()/4);
-        currentSprite.draw(batch);
+
+        if(currentDirection == Direction.UP){
+            weapons.get(currentWeapon).draw(batch);
+            currentSprite.draw(batch);
+        }
+        else{
+            currentSprite.draw(batch);
+            weapons.get(currentWeapon).draw(batch);
+        }
+
     }
 
     public float getX(){
@@ -164,9 +184,8 @@ public class Player implements Hittable {
             }, center.x - 0.18f, center.y - 0.18f, center.x + 0.18f, center.y + 0.18f);
 
             if(stillInHit[0]) {
-                life -= 1;
+                life -= currentDamage;
                 hittableListeners.forEach(l -> l.hitted(Player.this));
-                System.out.println("Player: " + life);
             }
         }
 
@@ -184,13 +203,13 @@ public class Player implements Hittable {
         updateDirection(angle);
 
         if(Gdx.input.isButtonPressed(0)){
-            currentWeapon.startShooting();
+            weapons.get(currentWeapon).startShooting();
         }
         else{
-            currentWeapon.stopShooting();
+            weapons.get(currentWeapon).stopShooting();
         }
 
-        currentWeapon.act(deltaTime, angle);
+        weapons.get(currentWeapon).act(deltaTime, angle);
     }
 
     private void updateDirection(double angle) {
@@ -225,12 +244,27 @@ public class Player implements Hittable {
             velocity.set(0, -0.075f);
         }
         body.applyLinearImpulse(velocity, center, true);
+
+        if(Gdx.input.isKeyJustPressed(Input.Keys.Q)) {
+            currentWeapon--;
+            currentWeapon = currentWeapon < 0 ? 0 : currentWeapon;
+        }
+
+        if(Gdx.input.isKeyJustPressed(Input.Keys.R)) {
+            weapons.get(currentWeapon).manualReload();
+        }
+
+        if(Gdx.input.isKeyJustPressed(Input.Keys.E)) {
+            currentWeapon++;
+            currentWeapon = currentWeapon >= weapons.size() ? weapons.size()-1 : currentWeapon;
+        }
     }
 
 
     //HITTABLE
     @Override
-    public void beginHit() {
+    public void beginHit(float damage) {
+        currentDamage = damage;
         inHit = true;
     }
 
@@ -240,13 +274,13 @@ public class Player implements Hittable {
     }
 
     @Override
-    public int getLife() {
+    public float getLife() {
         return life;
     }
 
     @Override
-    public int getMaxLife() {
-        return 100;
+    public float getMaxLife() {
+        return maxLife;
     }
 
     @Override

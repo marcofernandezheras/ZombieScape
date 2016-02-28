@@ -14,16 +14,13 @@ public class WorldContactListener implements ContactListener {
 
     private void handleContactZombieBullet(Zombie zombie, Bullet bullet){
         bullet.markToDelete();
-        zombie.beginHit();
-        if(zombie.getLife() <= 0){
-            zombie.markToDelete();
-        }
+        zombie.beginHit(bullet.getDamage());
     }
 
     private void handleBeginContactZombiePlayer(Zombie zombie, Player player, boolean inSensor){
         zombie.setAggro(player);
         if(!inSensor)
-            player.beginHit();
+            player.beginHit(zombie.getDamage());
     }
 
     private void handleEndContactZombiePlayer(Zombie zombie, Player player, boolean inSensor){

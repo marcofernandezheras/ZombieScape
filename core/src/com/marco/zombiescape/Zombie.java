@@ -56,14 +56,21 @@ public class Zombie implements Hittable, Deletable, Disposable {
     private int frame = 0;
     boolean aggro = false;
     private Player player;
-    private int life;
+    private float life;
     private ArrayList<HittableListener> hittableListeners;
     private boolean deleteMe = false;
     private Sprite bloodSprite;
     float bloodX;
     float bloodY;
 
+    public float getDamage() {
+        return damage;
+    }
+
+    private final float damage;
+
     private Zombie(World world, float x, float y) {
+        damage = (float) ThreadLocalRandom.current().nextDouble(1, 5);
         finder = new AStarPathFinder(WorldMapFactory.mapStage, 20, false);
         bloodSprite = new Sprite(Resources.instance.getRegion("blood", ThreadLocalRandom.current().nextInt(0,7)));
         spriteNumber = ThreadLocalRandom.current().nextInt(0, Direction.sprites.length);
@@ -202,10 +209,13 @@ public class Zombie implements Hittable, Deletable, Disposable {
 
     //HITTABLE
     @Override
-    public void beginHit() {
-        life--;
-        System.out.println(life);
+    public void beginHit(float damage) {
+        life -= damage;
+        System.out.println("Zombie life: " + life);
         hittableListeners.forEach(l -> l.hitted(Zombie.this));
+        if(life <= 0){
+            markToDelete();
+        }
     }
 
     @Override
@@ -213,12 +223,12 @@ public class Zombie implements Hittable, Deletable, Disposable {
     }
 
     @Override
-    public int getLife() {
+    public float getLife() {
         return life;
     }
 
     @Override
-    public int getMaxLife() {
+    public float getMaxLife() {
         return 0;
     }
 

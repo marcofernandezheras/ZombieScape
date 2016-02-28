@@ -2,7 +2,6 @@ package com.marco.zombiescape;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.audio.Sound;
-import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
@@ -12,7 +11,6 @@ import com.badlogic.gdx.utils.Disposable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Created by marco on 12/02/16.
@@ -21,11 +19,18 @@ public class Bullet implements Deletable, Disposable {
     private final Body bullet;
     private static final Sprite sprite = new Sprite(Resources.instance.getRegion("bullet"));
     private boolean deleteMe = false;
-    public static Sound buletSound = Gdx.audio.newSound(Gdx.files.internal("shootSound.mp3"));
+
+    public float getDamage() {
+        return damage;
+    }
+
+    private final float damage;
+    public static Sound bulletSound = Gdx.audio.newSound(Gdx.files.internal("shootSound.mp3"));
 
     protected static final List<Bullet> bulletPool = new ArrayList<>();
 
-    private Bullet(float fromX, float fromY, float angle) {
+    private Bullet(float damage, float fromX, float fromY, float angle) {
+        this.damage = damage;
         BodyDef def = new BodyDef();
         def.type = BodyDef.BodyType.DynamicBody;
         def.bullet = true;
@@ -54,11 +59,10 @@ public class Bullet implements Deletable, Disposable {
         frictionJointDef.maxTorque = 0; //Set to 0 to prevent rotation
 
         WorldMapFactory.world.createJoint(frictionJointDef);
-        buletSound.play(0.3f);
     }
 
-    public static Bullet newBullet(float fromX, float fromY, float angle){
-        Bullet bullet = new Bullet(fromX, fromY, angle);
+    public static Bullet newBullet(float damage, float fromX, float fromY, float angle){
+        Bullet bullet = new Bullet(damage, fromX, fromY, angle);
         bulletPool.add(bullet);
         return bullet;
     }

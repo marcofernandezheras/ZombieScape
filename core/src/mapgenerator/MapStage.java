@@ -43,6 +43,7 @@ public class MapStage {
     private Tile[][] tiles;
 
     private List<Wall> walls = new ArrayList<>();
+    private List<Vector2> floors = new ArrayList<>();
 
     private List<Rectangle> rooms = new ArrayList<>();
 
@@ -77,6 +78,14 @@ public class MapStage {
 
     public void addWall(int x, int y, int around){
         walls.add(new Wall(x,y,around));
+    }
+
+    public void addFloor(int x, int y){
+        floors.add(new Vector2(x,y));
+    }
+
+    public List<Vector2> getFloors() {
+        return floors;
     }
 
     public List<Rectangle> getRooms() {
