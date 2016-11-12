@@ -5,6 +5,7 @@ import com.badlogic.gdx.physics.box2d.Contact;
 import com.badlogic.gdx.physics.box2d.ContactImpulse;
 import com.badlogic.gdx.physics.box2d.ContactListener;
 import com.badlogic.gdx.physics.box2d.Manifold;
+import com.marco.zombiescape.weapons.Ammunition;
 
 /**
  * Created by marco on 25/02/16.
@@ -55,6 +56,16 @@ public class WorldContactListener implements ContactListener {
             boolean isSensor = userData instanceof Player ? contact.getFixtureA().isSensor() : contact.getFixtureB().isSensor();
             if(!isSensor)
                 l.notifyLevel();
+        }
+        else if((userData instanceof Ammunition || userData1 instanceof Ammunition)
+                && (userData instanceof Player || userData1 instanceof Player)){
+            Player p = userData instanceof Player ? (Player)userData : (Player)userData1;
+            Ammunition ammunition = userData instanceof Ammunition ? (Ammunition)userData : (Ammunition)userData1;
+            boolean isSensor = userData instanceof Player ? contact.getFixtureA().isSensor() : contact.getFixtureB().isSensor();
+            if(!isSensor) {
+                ammunition.handleAmmunition(p.getWeapons());
+                ammunition.markToDelete();
+            }
         }
     }
 

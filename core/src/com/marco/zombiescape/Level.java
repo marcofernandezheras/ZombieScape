@@ -14,6 +14,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.World;
+import com.marco.zombiescape.weapons.AmmunitionPool;
 import mapgenerator.DungeonBuilder;
 import mapgenerator.MapStage;
 import mapgenerator.StageBuilderConfig;
@@ -46,6 +47,7 @@ public class Level {
     private Rectangle initRoom;
     private int levelNumber;
     private LevelEnd levelEndObject;
+    private AmmunitionPool ammunitionPool;
 
     public Player getPlayer() {
         return player;
@@ -64,12 +66,14 @@ public class Level {
         batch = new SpriteBatch();
         camera = new OrthographicCamera();
         debugRenderer = new Box2DDebugRenderer();
+        ammunitionPool = AmmunitionPool.instance;
     }
 
     public Level() {
         batch = new SpriteBatch();
         camera = new OrthographicCamera();
         debugRenderer = new Box2DDebugRenderer();
+        ammunitionPool = AmmunitionPool.instance;
     }
 
     public int getLevelNumber() {
@@ -156,13 +160,21 @@ public class Level {
         player.act(mx, my);
         Zombie.zombiePool.forEach(Zombie::act);
 
-        Zombie.zombiePool.stream().filter(Zombie::isMarketToDelete).forEach(Zombie::dispose);
+        Zombie.zombiePool.stream().filter(Zombie::isMarketToDelete).forEach(z -> {
+            int i = ThreadLocalRandom.current().nextInt(0, 100);
+            if(i < (levelNumber + (80 * (1 - levelNumber/15)))){
+                AmmunitionPool.instance.newAmmunition(world, z.getX(), z.getY());
+            }
+            z.dispose();
+        });
         Zombie.zombiePool.removeIf(Zombie::isMarketToDelete);
 
         Bullet.bulletPool.stream().filter(Bullet::isMarketToDelete).forEach(Bullet::dispose);
         Bullet.bulletPool.removeIf(Bullet::isMarketToDelete);
 
         world.step(Gdx.graphics.getDeltaTime(), 6, 2);
+
+        ammunitionPool.act();
 
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
@@ -173,11 +185,12 @@ public class Level {
                 (int)camera.viewportWidth*2, (int)camera.viewportHeight*2);
         levelEndObject.draw(batch);
         Zombie.bloodPool.forEach(b -> b.draw(batch));
-
+        ammunitionPool.draw(batch);
         player.draw(batch);
 
         Zombie.zombiePool.forEach(zombie -> zombie.draw(batch));
         Bullet.bulletPool.forEach(b -> b.draw(batch));
+
 
         batch.end();
 
@@ -200,6 +213,7 @@ public class Level {
         background.dispose();
         batch.dispose();
         debugRenderer.dispose();
+        ammunitionPool.clear();
         Zombie.zombiePool.clear();
         Zombie.bloodPool.clear();
         Bullet.bulletPool.clear();
