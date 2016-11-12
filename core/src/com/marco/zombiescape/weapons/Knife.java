@@ -14,9 +14,11 @@ import com.marco.zombiescape.Zombie;
  * Created by marco on 28/02/16.
  */
 public class Knife extends Weapon {
+    private final Sprite wepSprite;
     boolean doDraw = false;
     float drawPhases = 0;
     float currentAngle;
+
     private final Sprite sprite;
     public Knife(Body body) {
         super(body);
@@ -25,6 +27,7 @@ public class Knife extends Weapon {
         sprite.setOrigin(0, sprite.getHeight()/2.0f);
         shootBeforeReload = 1;
         reloadDelay = 1f;
+        wepSprite = new Sprite(Resources.instance.getRegion("wep0"));
     }
 
     @Override
@@ -43,6 +46,16 @@ public class Knife extends Weapon {
             }
             return 1;
         }, center, new Vector2((float) (center.x + (Math.cos(angle)*.6)), (float) (center.y + (Math.sin(angle)*.6))));
+    }
+
+    @Override
+    public Sprite weaponSprite() {
+        return wepSprite;
+    }
+
+    @Override
+    public int getAmmunition() {
+        return -1;
     }
 
     @Override

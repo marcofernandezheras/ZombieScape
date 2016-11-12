@@ -1,5 +1,9 @@
 package com.marco.zombiescape.weapons;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.audio.Sound;
+import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.physics.box2d.Body;
 
@@ -23,20 +27,40 @@ public abstract class Weapon {
 
     protected float damage = 1;
     boolean wantToShot = false;
+    //public static Sound emptySound = Gdx.audio.newSound();
+    private static Music empty = Gdx.audio.newMusic(Gdx.files.internal("emptyGun.mp3"));
 
-    private enum state {
-        STOPPED, SHOOTING, BETWEEN_SHOOTS, RELOADING
+
+    protected int ammunition = 10;
+
+    protected enum state {
+        STOPPED, SHOOTING, BETWEEN_SHOOTS, RELOADING, EMPTY
     }
 
-    private state currentState = state.STOPPED;
+    protected state currentState = state.STOPPED;
 
     protected Weapon(Body body) {
         this.body = body;
     }
 
     protected abstract void doShoot(float angle);
+    public abstract Sprite weaponSprite();
+
+    public  int getAmmunition(){
+        return ammunition;
+    }
+
+    public void setAmmunition(int ammunition) {
+        this.ammunition = ammunition;
+        currentState = state.STOPPED;
+    }
 
     public void startShooting(){
+        if (currentState == state.EMPTY) {
+            if(!empty.isPlaying())
+                empty.play();
+            return;
+        }
         wantToShot = true;
         if(currentState == state.STOPPED){
             currentState = state.SHOOTING;
@@ -44,6 +68,8 @@ public abstract class Weapon {
     }
 
     public void stopShooting(){
+        if (currentState == state.EMPTY)
+            return;
         wantToShot = false;
         if(currentState != state.RELOADING && currentState != state.BETWEEN_SHOOTS)
             currentState = state.STOPPED;
@@ -54,6 +80,9 @@ public abstract class Weapon {
     }
 
     public void act(float delta, float angle){
+        if (currentState == state.EMPTY)
+            return;
+
         if(currentState == state.RELOADING){
             currentReloadTime += delta;
             if(currentReloadTime > reloadDelay){
@@ -73,7 +102,8 @@ public abstract class Weapon {
         if (currentState == state.SHOOTING && wantToShot){
             doShoot(angle);
             shootCount++;
-            currentState = shootCount >= shootBeforeReload ? state.RELOADING : state.BETWEEN_SHOOTS;
+            if(currentState != state.EMPTY)
+                currentState = shootCount >= shootBeforeReload ? state.RELOADING : state.BETWEEN_SHOOTS;
         }
     }
 

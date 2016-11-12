@@ -56,7 +56,17 @@ public class Player implements Hittable {
     private int frame = 0;
 
     private float maxLife = 100;
+
+    public List<Weapon> getWeapons() {
+        return weapons;
+    }
+
     private List<Weapon> weapons = new ArrayList<>();
+
+    public Weapon getCurrentWeapon() {
+        return weapons.get(currentWeapon);
+    }
+
     int currentWeapon;
 
     public Player(World world, float x, float y) {

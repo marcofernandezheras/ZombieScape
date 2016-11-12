@@ -8,6 +8,7 @@ import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.GlyphLayout;
+import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.physics.box2d.Box2D;
@@ -22,6 +23,7 @@ public class ZombieScape extends ApplicationAdapter{
     private GlyphLayout pauseGlyph;
     private GlyphLayout gameOverGlyph;
     private BitmapFont smallFont;
+    private BitmapFont ammoFont;
     private GlyphLayout toContinueGlyph;
     private GlyphLayout toStartGlyphAgain;
     private GlyphLayout titleGlyph;
@@ -49,6 +51,11 @@ public class ZombieScape extends ApplicationAdapter{
         parameter2.size = 40;
         parameter2.color = Color.RED;
         smallFont = generator.generateFont(parameter2);
+
+        FreeTypeFontGenerator.FreeTypeFontParameter parameter3 = new FreeTypeFontGenerator.FreeTypeFontParameter();
+        parameter3.size = 25;
+        parameter3.color = Color.BLACK;
+        ammoFont = generator.generateFont(parameter3);
 
         generator.dispose();
 
@@ -164,8 +171,16 @@ public class ZombieScape extends ApplicationAdapter{
             camera.update();
             camera.setToOrtho(false);
             hudBatch.setProjectionMatrix(camera.combined);
+
+            int ammunition = currentLevel.getPlayer().getCurrentWeapon().getAmmunition();
+
             hudBatch.begin();
             lifeHud.draw(hudBatch);
+            Sprite wep = currentLevel.getPlayer().getCurrentWeapon().weaponSprite();
+            wep.setPosition((camera.viewportWidth * camera.zoom) - wep.getWidth(), 0);
+            wep.draw(hudBatch);
+            if(ammunition != -1)
+                ammoFont.draw(hudBatch, String.valueOf(ammunition), (camera.viewportWidth * camera.zoom) - 30, 30);
             hudBatch.end();
             camera.zoom = 1f;
         }

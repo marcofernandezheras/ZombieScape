@@ -9,6 +9,7 @@ import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.*;
 import com.badlogic.gdx.physics.box2d.joints.FrictionJointDef;
 import com.badlogic.gdx.utils.Disposable;
+import com.marco.zombiescape.weapons.AmmunitionPool;
 import pathfind.AStarPathFinder;
 import pathfind.Path;
 
@@ -240,11 +241,21 @@ public class Zombie implements Hittable, Deletable, Disposable {
     //DISPOSABLE
     @Override
     public void dispose() {
+        Vector2 worldCenter = body.getWorldCenter();
         try {
+
             System.out.println("Zombi dispose");
             body.getFixtureList().get(0).setUserData(null);
             WorldMapFactory.world.destroyBody(body);
             bloodPool.add(this);
         } catch(Exception e){}
+    }
+
+    public float getX(){
+        return body.getWorldCenter().x;
+    }
+
+    public float getY(){
+        return body.getWorldCenter().y;
     }
 }
